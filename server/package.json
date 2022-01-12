@@ -1,0 +1,30 @@
+{
+  "name": "clip-share-server",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/server.ts",
+    "start": "NODE_ENV=production node dist/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DCsunset/clip-share/server"
+  },
+  "keywords": [
+    "clipboard",
+    "share",
+    "Node.js"
+  ],
+  "author": "DCsunset",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "fastify": "^3.25.3"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.8",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  }
+}
