@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "ts-node src/server.ts",
+    "dev": "CONFIG_PATH=./test/config.json ts-node src/server.ts",
+    "type-guard": "ts-auto-guard src/types.ts",
     "start": "NODE_ENV=production node dist/server.js"
   },
   "repository": {
@@ -20,10 +21,19 @@
   "author": "DCsunset",
   "license": "AGPL-3.0",
   "dependencies": {
-    "fastify": "^3.25.3"
+    "fastify": "^3.25.3",
+    "fastify-cookie": "^5.5.0",
+    "fastify-plugin": "^3.0.0",
+    "fastify-websocket": "^4.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "luxon": "^2.3.0"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^8.5.7",
+    "@types/luxon": "^2.0.9",
     "@types/node": "^17.0.8",
+    "@types/ws": "^8.2.2",
+    "ts-auto-guard": "^1.0.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4"
   }

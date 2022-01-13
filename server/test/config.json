@@ -1,0 +1,7 @@
+{
+	"jwt": {
+		"cookieName": "clip-share-token",
+		"secret": "test",
+		"maxAgeInDays": 30
+	}
+}
