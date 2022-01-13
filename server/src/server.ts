@@ -7,7 +7,7 @@ import { isRequest, isSessionRequest } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
-import { verifyChallengeReponse } from "./util/crypto";
+import { computeFingerprint, verifyChallengeReponse } from "./util/crypto";
 
 const config = readConfig();
 
@@ -51,7 +51,6 @@ fastify.post("/session", async (req, reply) => {
 	}
 
 	const body = req.body as SessionRequest;
-	const name = body.name.trim();
 
 	let publicKey: crypto.KeyObject;
 	try {
@@ -62,15 +61,14 @@ fastify.post("/session", async (req, reply) => {
 	}
 
 	verifyChallengeReponse(publicKey, body.challengeResponse);
-	const signature = crypto.createSign("sha1");
+	const fingerprint = computeFingerprint(publicKey);
 
-	const token = generateToken({ signature }, config);
-
-	onlineDevices.set(token, {
-		name,
+	onlineDevices.set(fingerprint, {
+		name: body.name,
 		key: publicKey
 	});
 
+	const token = generateToken({ fingerprint }, config);
 	if (body.cookie) {
 		reply.setCookie(config.jwt.cookieName, token, {
 			httpOnly: true,

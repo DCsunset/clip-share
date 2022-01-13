@@ -2,6 +2,17 @@ import crypto from "crypto";
 import { DateTime } from "luxon";
 import { HttpError } from "../types";
 
+export const computeFingerprint = (publicKey: crypto.KeyObject) => {
+	// deterministic generation for fingerprint
+	const encoded = publicKey.export({
+		type: "spki",
+		format: "pem"
+	});
+	const hash = crypto.createHash("sha-1");
+	hash.update(encoded);
+	return hash.digest("hex");
+};
+
 export const verifyChallengeReponse = (publicKey: crypto.KeyObject, response: string) => {
 	let challenge: string;
 	try {

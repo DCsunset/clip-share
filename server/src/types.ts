@@ -25,7 +25,7 @@ export type Config = {
 
 export type DeviceInfo = {
 	name: string;
-	// public key (the signature used as identifier)
+	// public key (the fingerprint used as identifier)
 	key: crypto.KeyObject;
 };
 
