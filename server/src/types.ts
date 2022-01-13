@@ -1,5 +1,13 @@
 import crypto from "crypto";
 
+/**
+ * Payload of the token
+ */
+export interface TokenPayload {
+	fingerprint: string;
+	name: string;
+}
+
 export class HttpError extends Error {
 	constructor(public statusCode: number, message: string) {
 		super(message);
@@ -26,7 +34,7 @@ export type Config = {
 export type DeviceInfo = {
 	name: string;
 	// public key (the fingerprint used as identifier)
-	key: crypto.KeyObject;
+	key?: crypto.KeyObject;
 };
 
 /**

@@ -64,16 +64,10 @@ fastify.post("/session", async (req, reply) => {
 	verifyChallengeReponse(publicKey, body.challengeResponse);
 	const fingerprint = computeFingerprint(publicKey);
 
-	if (onlineDevices.has(fingerprint)) {
-		throw new HttpError(409, "Device of this key already online");
-	}
-
-	onlineDevices.set(fingerprint, {
-		name: body.name,
-		key: publicKey
-	});
-
-	const token = generateToken({ fingerprint }, config);
+	const token = generateToken({
+		fingerprint,
+		name: body.name
+	}, config);
 	if (body.cookie) {
 		reply.setCookie(config.jwt.cookieName, token, {
 			httpOnly: true,
@@ -88,7 +82,7 @@ fastify.post("/session", async (req, reply) => {
 
 // check login
 fastify.get("/session", async (req, reply) => {
-	if (verifyToken(req.token, config)) {
+	if (verifyToken(req.token, config) !== null) {
 		reply.statusCode = 204;
 	}
 	else {
@@ -105,9 +99,18 @@ fastify.delete("/session", async (_req, reply) => {
 
 // Connect via WebSocket
 fastify.get("/", { websocket: true }, async (connection, req) => {
-	if (!verifyToken(req.token, config)) {
+	const payload = verifyToken(req.token, config);
+	if (payload === null) {
 		throw new HttpError(401, "Unauthorized");
 	}
+
+	const { fingerprint, name } = payload;
+
+	if (onlineDevices.has(fingerprint)) {
+		throw new HttpError(409, "Device of this key already online");
+	}
+
+	onlineDevices.set(fingerprint, { name });
 
 	connection.socket.on("message", message => {
 		try {
@@ -123,6 +126,7 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 				case "list":
 					break;
 				case "pair":
+					// TODO: sent public key to prepare for pairing
 					break;
 				case "send":
 					break;
