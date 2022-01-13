@@ -20,9 +20,10 @@ fastify.register(tokenPlugin, {
 	cookieName: config.jwt.cookieName
 });
 
-// Server state
+// Server state: Map<fingerprint, Device>
 const onlineDevices: Map<string, DeviceInfo> = new Map();
 // Unsent clipboard data (wait until device online)
+// Map<fingerprint, content>
 const clipboard: Map<string, string> = new Map();
 
 // Custom error handler
@@ -62,6 +63,10 @@ fastify.post("/session", async (req, reply) => {
 
 	verifyChallengeReponse(publicKey, body.challengeResponse);
 	const fingerprint = computeFingerprint(publicKey);
+
+	if (onlineDevices.has(fingerprint)) {
+		throw new HttpError(409, "Device of this key already online");
+	}
 
 	onlineDevices.set(fingerprint, {
 		name: body.name,
