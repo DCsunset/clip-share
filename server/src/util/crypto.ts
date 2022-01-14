@@ -1,24 +1,30 @@
-import crypto from "crypto";
+import openpgp from "openpgp";
 import { DateTime } from "luxon";
 import { HttpError } from "../types";
 
-export const computeFingerprint = (publicKey: crypto.KeyObject) => {
-	// deterministic generation for fingerprint
-	const encoded = publicKey.export({
-		type: "spki",
-		format: "pem"
-	});
-	const hash = crypto.createHash("sha-1");
-	hash.update(encoded);
-	return hash.digest("hex");
+export function getKeyInfo(publicKey: openpgp.Key) {
+	return {
+		name: publicKey.getUserIDs().join(", "),
+		fingerprint: publicKey.getFingerprint()
+	};
 };
 
-export const verifyChallengeReponse = (publicKey: crypto.KeyObject, response: string) => {
+export async function verifyChallengeReponse(publicKey: openpgp.Key, response: string) {
 	let challenge: string;
 	try {
-		// Decode base64
-		const buffer = Buffer.from(response, "base64");
-		challenge = crypto.publicDecrypt(publicKey, buffer).toString("utf-8");
+		const message = await openpgp.readMessage({
+			armoredMessage: response
+		});
+		const result = await openpgp.verify({
+			message,
+			verificationKeys: publicKey
+		});
+		const verified = await result.signatures[0].verified;
+		if (!verified) {
+			throw new Error();
+		}
+
+		challenge = result.data;
 	}
 	catch (err) {
 		throw new HttpError(401, "Invalid challenge response");
@@ -36,5 +42,5 @@ export const verifyChallengeReponse = (publicKey: crypto.KeyObject, response: st
 			return;
 		}
 	}
-	throw new HttpError(401, "Invalid challenge response");
+	throw new HttpError(401, "Expired challenge");
 };

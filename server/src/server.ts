@@ -1,7 +1,7 @@
 import Fastify from "fastify";
 import FastifyWebSocket from "fastify-websocket";
 import FastifyCookie from "fastify-cookie";
-import crypto from "crypto";
+import openpgp from "openpgp";
 import {
 	DeviceInfo,
 	HttpError,
@@ -15,8 +15,7 @@ import { isBaseRequest, isSessionRequest } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
-import { computeFingerprint, verifyChallengeReponse } from "./util/crypto";
-import { REPL_MODE_SLOPPY } from "repl";
+import { getKeyInfo, verifyChallengeReponse } from "./util/crypto";
 
 const config = readConfig();
 
@@ -62,21 +61,20 @@ fastify.post("/session", async (req, reply) => {
 
 	const body = req.body as SessionRequest;
 
-	let publicKey: crypto.KeyObject;
+	let publicKey: openpgp.Key;
 	try {
-		publicKey = crypto.createPublicKey(body.publicKey);
+		publicKey = await openpgp.readKey({
+			armoredKey: body.publicKey
+		});
 	}
 	catch (err) {
 		throw new HttpError(401, "Invalid public key");
 	}
 
-	verifyChallengeReponse(publicKey, body.challengeResponse);
-	const fingerprint = computeFingerprint(publicKey);
+	await verifyChallengeReponse(publicKey, body.challengeResponse);
 
-	const token = generateToken({
-		fingerprint,
-		name: body.name
-	}, config);
+	const keyInfo = getKeyInfo(publicKey);
+	const token = generateToken(keyInfo, config);
 	if (body.cookie) {
 		reply.setCookie(config.jwt.cookieName, token, {
 			httpOnly: true,

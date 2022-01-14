@@ -43,10 +43,9 @@ export type DeviceInfo = {
  * @see {isSessionRequest} ts-auto-guard:type-guard
  */
 export type SessionRequest = {
-	// device name
-	name: string;
+	// OpenPGP armored public key (userID as device name)
 	publicKey: string;
-	// Sign the challenge string (base64)
+	// Sign the challenge string (OpenPGP message format)
 	challengeResponse: string;
 	// Use cookie or return the token directly
 	cookie?: boolean;

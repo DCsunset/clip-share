@@ -26,7 +26,8 @@
     "fastify-plugin": "^3.0.0",
     "fastify-websocket": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
-    "luxon": "^2.3.0"
+    "luxon": "^2.3.0",
+    "openpgp": "^5.0.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^8.5.7",
