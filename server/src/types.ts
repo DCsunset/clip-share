@@ -56,21 +56,63 @@ export type SessionRequest = {
 export type RequestType = "pair" | "list" | "send";
 
 /**
- * Request used in WebSocket communication
+ * BaseRequest used in WebSocket communication
  * 
- * @see {isRequest} ts-auto-guard:type-guard
+ * @see {isBaseRequest} ts-auto-guard:type-guard
  */
-export type Request = {
+export interface BaseRequest {
 	type: RequestType;
-	data?: string;
 };
 
 /**
- * Response used in WebSocket communication
+ * Request to pair a specific device
  * 
- * @see {isResponse} ts-auto-guard:type-guard
+ * @see {isPairRequest} ts-auto-guard:type-guard
  */
-export type Response = {
+export interface PairRequest extends BaseRequest {
+	/// the device to pair
+	device: string;
+	/// public key for e2ee
+	publicKey: string;
+}
+
+
+/**
+ * ResponseType is necessary for multiplexing
+ * (handle multiple requests at the same time)
+ * 
+ * @see {isResponseType} ts-auto-guard:type-guard
+ */
+export type ResponseType = "pair" | "list" | "send" | "request";
+
+/**
+ * BaseResponse used in WebSocket communication
+ * 
+ * @see {isBaseResponse} ts-auto-guard:type-guard
+ */
+export interface BaseResponse {
+	type: ResponseType;
 	success: boolean;
-	data?: string;
+};
+
+/**
+ * Response for errors
+ * 
+ * @see {isErrorResponse} ts-auto-guard:type-guard
+ */
+export interface ErrorResponse extends BaseResponse {
+	error: string;
+};
+
+
+/**
+ * Response for ListRequest
+ * 
+ * @see {isListResponse} ts-auto-guard:type-guard
+ */
+export interface ListResponse extends BaseResponse {
+	devices: {
+		name: string,
+		fingerprint: string
+	}[];
 };

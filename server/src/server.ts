@@ -2,12 +2,21 @@ import Fastify from "fastify";
 import FastifyWebSocket from "fastify-websocket";
 import FastifyCookie from "fastify-cookie";
 import crypto from "crypto";
-import { DeviceInfo, HttpError, Request, Response, SessionRequest } from "./types";
-import { isRequest, isSessionRequest } from "./types.guard";
+import {
+	DeviceInfo,
+	HttpError,
+	BaseRequest,
+	BaseResponse,
+	SessionRequest,
+	ErrorResponse,
+	ListResponse
+} from "./types";
+import { isBaseRequest, isSessionRequest } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
 import { computeFingerprint, verifyChallengeReponse } from "./util/crypto";
+import { REPL_MODE_SLOPPY } from "repl";
 
 const config = readConfig();
 
@@ -113,32 +122,52 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 	onlineDevices.set(fingerprint, { name });
 
 	connection.socket.on("message", message => {
+		// assign a default value
+		let response: BaseResponse = {
+			type: "request",
+			success: true
+		};
 		try {
 			const rawData = JSON.parse(message.toString());
 			// check type
-			if (!isRequest(rawData)) {
+			if (!isBaseRequest(rawData)) {
 				throw new Error("Invalid request");
 			}
 
-			// TODO
-			const request = rawData as Request;
-			switch (request.type) {
+
+			const baseRequest = rawData as BaseRequest;
+			response.type = baseRequest.type;
+
+			switch (baseRequest.type) {
 				case "list":
+					const devices = Array.from(onlineDevices.entries())
+						.map(([fingerprint, info]) => ({
+							name: info.name,
+							fingerprint
+						}));
+					response = {
+						...response,
+						devices
+					} as ListResponse;
 					break;
 				case "pair":
 					// TODO: sent public key to prepare for pairing
 					break;
 				case "send":
+					// TODO
 					break;
+				default:
+					throw new Error("Invalid request type");
 			}
 		}
 		catch (err) {
-			const errMsg = `Error: ${(err as Error).message}`;
-			connection.socket.send({
+			response = {
+				...response,
 				success: false,
-				data: errMsg
-			} as Response);
+				error: `Error: ${(err as Error).message}`
+			} as ErrorResponse;
 		}
+		connection.socket.send(response);
 	});
 
 	// TODO: remove from onlineDevice when connection closed
