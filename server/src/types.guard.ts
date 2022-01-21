@@ -2,7 +2,7 @@
  * Generated type guards for "types.ts".
  * WARNING: Do not manually change this file.
  */
-import { Config, SessionRequest, RequestType, BaseRequest, PairRequest, ResponseType, BaseResponse, ErrorResponse, ListResponse } from "./types";
+import { Config, SessionRequest, RequestType, BaseRequest, PairRequest, ResponseType, BaseResponse, ErrorResponse, ListResponse, PairResponse } from "./types";
 
 export function isConfig(obj: any, _argumentName?: string): obj is Config {
     return (
@@ -23,7 +23,6 @@ export function isSessionRequest(obj: any, _argumentName?: string): obj is Sessi
         (obj !== null &&
             typeof obj === "object" ||
             typeof obj === "function") &&
-        typeof obj.name === "string" &&
         typeof obj.publicKey === "string" &&
         typeof obj.challengeResponse === "string" &&
         (typeof obj.cookie === "undefined" ||
@@ -62,7 +61,8 @@ export function isResponseType(obj: any, _argumentName?: string): obj is Respons
         (obj === "pair" ||
             obj === "list" ||
             obj === "send" ||
-            obj === "request")
+            obj === "request" ||
+            obj === "internal")
     )
 }
 
@@ -94,5 +94,13 @@ export function isListResponse(obj: any, _argumentName?: string): obj is ListRes
             typeof e.name === "string" &&
             typeof e.fingerprint === "string"
         )
+    )
+}
+
+export function isPairResponse(obj: any, _argumentName?: string): obj is PairResponse {
+    return (
+        isBaseResponse(obj) as boolean &&
+        typeof obj.name === "string" &&
+        typeof obj.publicKey === "string"
     )
 }

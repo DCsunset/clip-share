@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import { WebSocket } from "ws";
 
 /**
  * Payload of the token
@@ -12,7 +12,6 @@ export class HttpError extends Error {
 	constructor(public statusCode: number, message: string) {
 		super(message);
 		this.statusCode = statusCode;
-		this.message = message;
 	}
 };
 
@@ -33,8 +32,8 @@ export type Config = {
 
 export type DeviceInfo = {
 	name: string;
-	// public key (the fingerprint used as identifier)
-	key?: crypto.KeyObject;
+	// websocket connection
+	websocket: WebSocket;
 };
 
 /**
@@ -69,7 +68,7 @@ export interface BaseRequest {
  * @see {isPairRequest} ts-auto-guard:type-guard
  */
 export interface PairRequest extends BaseRequest {
-	/// the device to pair
+	/// the device to pair (fingerprint)
 	device: string;
 	/// public key for e2ee
 	publicKey: string;
@@ -82,7 +81,15 @@ export interface PairRequest extends BaseRequest {
  * 
  * @see {isResponseType} ts-auto-guard:type-guard
  */
-export type ResponseType = "pair" | "list" | "send" | "request";
+export type ResponseType = "pair" | "list" | "send" | "request" | "internal";
+
+export class WebSocketError extends Error {
+	constructor(public type: ResponseType, message: string) {
+		super(message);
+		this.type = type;
+	}
+};
+
 
 /**
  * BaseResponse used in WebSocket communication
@@ -103,7 +110,6 @@ export interface ErrorResponse extends BaseResponse {
 	error: string;
 };
 
-
 /**
  * Response for ListRequest
  * 
@@ -114,4 +120,16 @@ export interface ListResponse extends BaseResponse {
 		name: string,
 		fingerprint: string
 	}[];
+};
+
+/**
+ * Response for ListRequest
+ * 
+ * @see {isPairResponse} ts-auto-guard:type-guard
+ */
+export interface PairResponse extends BaseResponse {
+	/// the other pairing device
+	name: string;
+	/// public key from the other device
+	publicKey: string;
 };

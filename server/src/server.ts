@@ -9,9 +9,12 @@ import {
 	BaseResponse,
 	SessionRequest,
 	ErrorResponse,
-	ListResponse
+	ListResponse,
+	PairRequest,
+	PairResponse,
+	WebSocketError
 } from "./types";
-import { isBaseRequest, isSessionRequest } from "./types.guard";
+import { isBaseRequest, isPairRequest, isSessionRequest } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
@@ -117,55 +120,82 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 		throw new HttpError(409, "Device of this key already online");
 	}
 
-	onlineDevices.set(fingerprint, { name });
+	onlineDevices.set(fingerprint, {
+		name,
+		websocket: connection.socket
+	});
 
 	connection.socket.on("message", message => {
-		// assign a default value
-		let response: BaseResponse = {
-			type: "request",
-			success: true
-		};
 		try {
 			const rawData = JSON.parse(message.toString());
 			// check type
 			if (!isBaseRequest(rawData)) {
-				throw new Error("Invalid request");
+				throw new WebSocketError("request", "Invalid request");
 			}
 
-
 			const baseRequest = rawData as BaseRequest;
-			response.type = baseRequest.type;
-
 			switch (baseRequest.type) {
-				case "list":
+				case "list": {
 					const devices = Array.from(onlineDevices.entries())
 						.map(([fingerprint, info]) => ({
 							name: info.name,
 							fingerprint
 						}));
-					response = {
-						...response,
+					const listReponse: ListResponse = {
+						type: "list",
+						success: true,
 						devices
 					} as ListResponse;
+					connection.socket.send(listReponse);
 					break;
-				case "pair":
-					// TODO: sent public key to prepare for pairing
+				}
+				case "pair": {
+					// Forward request from devices
+					// check type
+					if (!isPairRequest(baseRequest)) {
+						throw new WebSocketError("pair", "Invalid request");
+					}
+					const { device, publicKey	} = baseRequest as PairRequest;
+					if (!onlineDevices.has(device)) {
+						throw new WebSocketError("pair", "Device not online");
+					}
+					// Info of the other devices
+					const info = onlineDevices.get(device)!;
+					const pairResponse: PairResponse = {
+						type: "pair",
+						success: true,
+						name,
+						publicKey
+					};
+					info.websocket.send(pairResponse);
 					break;
-				case "send":
+				}
+				case "send": {
 					// TODO
 					break;
+				}
 				default:
-					throw new Error("Invalid request type");
+					throw new WebSocketError("request", "Invalid request type");
 			}
 		}
 		catch (err) {
-			response = {
-				...response,
-				success: false,
-				error: `Error: ${(err as Error).message}`
-			} as ErrorResponse;
+			let errResponse: ErrorResponse;
+			if (err instanceof WebSocketError) {
+				errResponse = {
+					type: err.type,
+					success: false,
+					error: `Error: ${err.message}`
+				};
+			}
+			else {
+				errResponse = {
+					type: "internal",
+					success: false,
+					error: `Error: ${(err as Error).message}`
+				};
+			}
+			connection.socket.send(errResponse);
 		}
-		connection.socket.send(response);
 	});
 
 	// TODO: remove from onlineDevice when connection closed
