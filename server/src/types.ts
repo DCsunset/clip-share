@@ -57,78 +57,49 @@ export type SessionRequest = {
  * 
  * @see {isMessageType} ts-auto-guard:type-guard
  */
-export type MessageType = "pair" | "list" | "share";
+export type MessageType = "pair" | "list" | "share" | "error";
 
 /**
- * Error Type
+ * BaseMessage used in WebSocket communication
  * 
- * @see {ErrorType} ts-auto-guard:type-guard
+ * @see {isBaseMessage} ts-auto-guard:type-guard
  */
-export type ErrorType = "request" | "response" | "message" | "internal";
-
-
-/**
- * BaseRequest used in WebSocket communication
- * 
- * @see {isBaseRequest} ts-auto-guard:type-guard
- */
-export interface BaseRequest {
+export interface BaseMessage {
 	type: MessageType;
+	success: boolean;
+	error?: string;
 };
+
 
 /**
  * Request to pair a specific device
  * 
- * @see {isPairRequest} ts-auto-guard:type-guard
+ * @see {isPairMessage} ts-auto-guard:type-guard
  */
-export interface PairRequest extends BaseRequest {
+export interface PairMessage extends BaseMessage {
 	/// the device to pair (fingerprint)
 	device: string;
 	/// device name
 	name: string;
 	/// sender's public key for e2ee
-	publicKey: string;
+	publicKey?: string;
 }
 
 export class WebSocketError extends Error {
-	constructor(public type: MessageType | ErrorType, message: string) {
+	constructor(public type: MessageType, message: string) {
 		super(message);
 		this.type = type;
 	}
 };
 
-
 /**
- * BaseResponse used in WebSocket communication
- * 
- * @see {isBaseResponse} ts-auto-guard:type-guard
- */
-export interface BaseResponse {
-	type: MessageType | ErrorType;
-	success: boolean;
-	error?: string;
-};
-
-/**
- * Response for ListRequest
+ * Response for list message
  * 
  * @see {isListResponse} ts-auto-guard:type-guard
  */
-export interface ListResponse extends BaseResponse {
+export interface ListResponse extends BaseMessage {
 	devices: {
 		name: string,
 		fingerprint: string
 	}[];
-};
-
-/**
- * Response for ListRequest
- * 
- * @see {isPairResponse} ts-auto-guard:type-guard
- */
-export interface PairResponse extends BaseResponse {
-	/// receiver (fingerprint)
-	device: string;
-	/// sender's public key
-	publicKey?: string;
 };

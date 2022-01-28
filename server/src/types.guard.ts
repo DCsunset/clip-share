@@ -2,7 +2,7 @@
  * Generated type guards for "types.ts".
  * WARNING: Do not manually change this file.
  */
-import { Config, SessionRequest, RequestType, BaseRequest, PairRequest, ResponseType, BaseResponse, ErrorResponse, ListResponse, PairResponse } from "./types";
+import { Config, SessionRequest, MessageType, BaseMessage, PairMessage, ListResponse } from "./types";
 
 export function isConfig(obj: any, _argumentName?: string): obj is Config {
     return (
@@ -31,61 +31,40 @@ export function isSessionRequest(obj: any, _argumentName?: string): obj is Sessi
     )
 }
 
-export function isRequestType(obj: any, _argumentName?: string): obj is RequestType {
+export function isMessageType(obj: any, _argumentName?: string): obj is MessageType {
     return (
         (obj === "pair" ||
             obj === "list" ||
-            obj === "send")
+            obj === "share" ||
+            obj === "error")
     )
 }
 
-export function isBaseRequest(obj: any, _argumentName?: string): obj is BaseRequest {
+export function isBaseMessage(obj: any, _argumentName?: string): obj is BaseMessage {
     return (
         (obj !== null &&
             typeof obj === "object" ||
             typeof obj === "function") &&
-        isRequestType(obj.type) as boolean
+        isMessageType(obj.type) as boolean &&
+        typeof obj.success === "boolean" &&
+        (typeof obj.error === "undefined" ||
+            typeof obj.error === "string")
     )
 }
 
-export function isPairRequest(obj: any, _argumentName?: string): obj is PairRequest {
+export function isPairMessage(obj: any, _argumentName?: string): obj is PairMessage {
     return (
-        isBaseRequest(obj) as boolean &&
+        isBaseMessage(obj) as boolean &&
         typeof obj.device === "string" &&
-        typeof obj.publicKey === "string"
-    )
-}
-
-export function isResponseType(obj: any, _argumentName?: string): obj is ResponseType {
-    return (
-        (obj === "pair" ||
-            obj === "list" ||
-            obj === "send" ||
-            obj === "request" ||
-            obj === "internal")
-    )
-}
-
-export function isBaseResponse(obj: any, _argumentName?: string): obj is BaseResponse {
-    return (
-        (obj !== null &&
-            typeof obj === "object" ||
-            typeof obj === "function") &&
-        isResponseType(obj.type) as boolean &&
-        typeof obj.success === "boolean"
-    )
-}
-
-export function isErrorResponse(obj: any, _argumentName?: string): obj is ErrorResponse {
-    return (
-        isBaseResponse(obj) as boolean &&
-        typeof obj.error === "string"
+        typeof obj.name === "string" &&
+        (typeof obj.publicKey === "undefined" ||
+            typeof obj.publicKey === "string")
     )
 }
 
 export function isListResponse(obj: any, _argumentName?: string): obj is ListResponse {
     return (
-        isBaseResponse(obj) as boolean &&
+        isBaseMessage(obj) as boolean &&
         Array.isArray(obj.devices) &&
         obj.devices.every((e: any) =>
             (e !== null &&
@@ -94,13 +73,5 @@ export function isListResponse(obj: any, _argumentName?: string): obj is ListRes
             typeof e.name === "string" &&
             typeof e.fingerprint === "string"
         )
-    )
-}
-
-export function isPairResponse(obj: any, _argumentName?: string): obj is PairResponse {
-    return (
-        isBaseResponse(obj) as boolean &&
-        typeof obj.name === "string" &&
-        typeof obj.publicKey === "string"
     )
 }

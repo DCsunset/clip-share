@@ -3,17 +3,19 @@ import FastifyWebSocket from "fastify-websocket";
 import FastifyCookie from "fastify-cookie";
 import openpgp from "openpgp";
 import {
+	BaseMessage,
 	DeviceInfo,
 	HttpError,
-	BaseRequest,
-	BaseResponse,
-	SessionRequest,
 	ListResponse,
-	PairRequest,
-	PairResponse,
+	PairMessage,
+	SessionRequest,
 	WebSocketError
 } from "./types";
-import { isBaseRequest, isBaseResponse, isPairRequest, isSessionRequest } from "./types.guard";
+import {
+	isBaseMessage,
+	isPairMessage,
+	isSessionRequest
+} from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
@@ -128,46 +130,43 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 		try {
 			const rawData = JSON.parse(message.toString());
 			// check type
-			if (isBaseRequest(rawData)) {
-				const baseRequest = rawData as BaseRequest;
-				switch (baseRequest.type) {
+			if (isBaseMessage(rawData)) {
+				const baseMessage = rawData as BaseMessage;
+				switch (baseMessage.type) {
 					case "list": {
 						const devices = Array.from(onlineDevices.entries())
 							.map(([fingerprint, info]) => ({
 								name: info.name,
 								fingerprint
 							}));
-						const listReponse: ListResponse = {
+						const listResponse: ListResponse = {
 							type: "list",
 							success: true,
 							devices
-						} as ListResponse;
-						connection.socket.send(listReponse);
+						};
+						connection.socket.send(listResponse);
 						break;
 					}
 					case "pair": {
-						// Forward request from devices
+						// Forward messages from devices
 						// check type
-						if (!isPairRequest(baseRequest)) {
+						if (!isPairMessage(baseMessage)) {
 							throw new WebSocketError("pair", "Invalid request");
 						}
-						const { device, publicKey, name: deivceName	} = baseRequest as PairRequest;
-						if (!onlineDevices.has(device)) {
+						const pairMessage = baseMessage as PairMessage;
+						if (!onlineDevices.has(pairMessage.device)) {
 							throw new WebSocketError("pair", "Device not online");
 						}
 						// Info of the other devices
-						const info = onlineDevices.get(device)!;
-						if (info.name != deivceName) {
-							throw new WebSocketError("pair", "Device name not matched");
+						const info = onlineDevices.get(pairMessage.device)!;
+						if (info.name != pairMessage.name) {
+							throw new WebSocketError("pair", `Device name ${pairMessage.name} mismatched`);
 						}
 						// Send sender's info to receiver
-						const pairRequest: PairRequest = {
-							type: "pair",
-							device: fingerprint,
-							name,
-							publicKey
-						};
-						info.websocket.send(pairRequest);
+						pairMessage.device = fingerprint
+						pairMessage.name = name;
+
+						info.websocket.send(pairMessage);
 						break;
 					}
 					case "share": {
@@ -176,38 +175,27 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 					}
 				}
 			}
-			else if (isBaseResponse(rawData)) {
-				const baseReponse = rawData as BaseResponse;
-				switch (baseReponse.type) {
-					case "pair": {
-						break;
-					}
-					default: {
-						throw new WebSocketError("response", `Invalid response type: ${baseReponse.type}`);
-					}
-				}
-			}
 			else {
-				throw new WebSocketError("message", "Invalid message");
+				throw new WebSocketError("error", "Invalid message");
 			}
 		}
 		catch (err) {
-			let errResponse: BaseResponse;
+			let errMessage: BaseMessage;
 			if (err instanceof WebSocketError) {
-				errResponse = {
+				errMessage = {
 					type: err.type,
 					success: false,
 					error: `Error: ${err.message}`
 				};
 			}
 			else {
-				errResponse = {
-					type: "internal",
+				errMessage = {
+					type: "error",
 					success: false,
-					error: `Error: ${(err as Error).message}`
+					error: `Internal Error: ${(err as Error).message}`
 				};
 			}
-			connection.socket.send(errResponse);
+			connection.socket.send(errMessage);
 		}
 	});
 
