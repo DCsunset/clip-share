@@ -70,9 +70,21 @@ export interface BaseMessage {
 	error?: string;
 };
 
+/**
+ * Response for list request
+ * 
+ * @see {isListResponse} ts-auto-guard:type-guard
+ */
+export interface ListResponse extends BaseMessage {
+	devices: {
+		name: string,
+		fingerprint: string
+	}[];
+};
 
 /**
- * Request to pair a specific device
+ * Message to pair a specific device
+ * (request and reponse share the same type)
  * 
  * @see {isPairMessage} ts-auto-guard:type-guard
  */
@@ -85,21 +97,22 @@ export interface PairMessage extends BaseMessage {
 	publicKey?: string;
 }
 
+/**
+ * Request to share message
+ * (request and reponse share the same type)
+ * 
+ * @see {isShareMessage} ts-auto-guard:type-guard
+ */
+export interface ShareMessage extends BaseMessage {
+	/// the device to share (fingerprint)
+	device: string;
+	/// e2e encrypted message
+	message: string;
+}
+
 export class WebSocketError extends Error {
 	constructor(public type: MessageType, message: string) {
 		super(message);
 		this.type = type;
 	}
-};
-
-/**
- * Response for list message
- * 
- * @see {isListResponse} ts-auto-guard:type-guard
- */
-export interface ListResponse extends BaseMessage {
-	devices: {
-		name: string,
-		fingerprint: string
-	}[];
 };

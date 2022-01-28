@@ -9,17 +9,20 @@ import {
 	ListResponse,
 	PairMessage,
 	SessionRequest,
+	ShareMessage,
 	WebSocketError
 } from "./types";
 import {
 	isBaseMessage,
 	isPairMessage,
-	isSessionRequest
+	isSessionRequest,
+	isShareMessage
 } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./util/token";
 import { getKeyInfo, verifyChallengeReponse } from "./util/crypto";
+import { isSharedArrayBuffer } from "util/types";
 
 const config = readConfig();
 
@@ -170,9 +173,24 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 						break;
 					}
 					case "share": {
-						// TODO
+						if (!isShareMessage(baseMessage)) {
+							throw new WebSocketError("share", "Invalid message");
+						}
+						const shareMessage = baseMessage as ShareMessage;
+						if (!onlineDevices.has(shareMessage.device)) {
+							throw new WebSocketError("share", "Device not online");
+						}
+
+						// Info of the other devices
+						const info = onlineDevices.get(shareMessage.device)!;
+						// Send sender's info to receiver
+						shareMessage.device = fingerprint
+
+						info.websocket.send(shareMessage);
 						break;
 					}
+					default:
+						throw new WebSocketError("error", `Invalid message type: ${baseMessage.type}`);
 				}
 			}
 			else {
