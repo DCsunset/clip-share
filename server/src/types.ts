@@ -50,8 +50,22 @@ export type SessionRequest = {
 	cookie?: boolean;
 };
 
-/** @see {isRequestType} ts-auto-guard:type-guard */
-export type RequestType = "pair" | "list" | "send";
+
+/**
+ * Message Type for communication
+ * (handle multiple requests at the same time)
+ * 
+ * @see {isMessageType} ts-auto-guard:type-guard
+ */
+export type MessageType = "pair" | "list" | "share";
+
+/**
+ * Error Type
+ * 
+ * @see {ErrorType} ts-auto-guard:type-guard
+ */
+export type ErrorType = "request" | "response" | "message" | "internal";
+
 
 /**
  * BaseRequest used in WebSocket communication
@@ -59,7 +73,7 @@ export type RequestType = "pair" | "list" | "send";
  * @see {isBaseRequest} ts-auto-guard:type-guard
  */
 export interface BaseRequest {
-	type: RequestType;
+	type: MessageType;
 };
 
 /**
@@ -76,17 +90,8 @@ export interface PairRequest extends BaseRequest {
 	publicKey: string;
 }
 
-
-/**
- * ResponseType is necessary for multiplexing
- * (handle multiple requests at the same time)
- * 
- * @see {isResponseType} ts-auto-guard:type-guard
- */
-export type ResponseType = "pair" | "list" | "send" | "request" | "internal";
-
 export class WebSocketError extends Error {
-	constructor(public type: ResponseType, message: string) {
+	constructor(public type: MessageType | ErrorType, message: string) {
 		super(message);
 		this.type = type;
 	}
@@ -99,18 +104,9 @@ export class WebSocketError extends Error {
  * @see {isBaseResponse} ts-auto-guard:type-guard
  */
 export interface BaseResponse {
-	type: ResponseType;
+	type: MessageType | ErrorType;
 	success: boolean;
-};
-
-/**
- * Response for errors
- * 
- * @see {isErrorResponse} ts-auto-guard:type-guard
- */
-export interface ErrorResponse extends BaseResponse {
-	success: false;
-	error: string;
+	error?: string;
 };
 
 /**
@@ -131,8 +127,8 @@ export interface ListResponse extends BaseResponse {
  * @see {isPairResponse} ts-auto-guard:type-guard
  */
 export interface PairResponse extends BaseResponse {
-	/// the other pairing device
-	name: string;
-	/// public key from the other device
-	publicKey: string;
+	/// receiver (fingerprint)
+	device: string;
+	/// sender's public key
+	publicKey?: string;
 };

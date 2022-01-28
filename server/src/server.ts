@@ -8,7 +8,6 @@ import {
 	BaseRequest,
 	BaseResponse,
 	SessionRequest,
-	ErrorResponse,
 	ListResponse,
 	PairRequest,
 	PairResponse,
@@ -171,23 +170,29 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 						info.websocket.send(pairRequest);
 						break;
 					}
-					case "send": {
+					case "share": {
 						// TODO
 						break;
 					}
-					default:
-						throw new WebSocketError("request", "Invalid request type");
 				}
 			}
 			else if (isBaseResponse(rawData)) {
-				// TODO
+				const baseReponse = rawData as BaseResponse;
+				switch (baseReponse.type) {
+					case "pair": {
+						break;
+					}
+					default: {
+						throw new WebSocketError("response", `Invalid response type: ${baseReponse.type}`);
+					}
+				}
 			}
 			else {
-				throw new WebSocketError("request", "Invalid request");
+				throw new WebSocketError("message", "Invalid message");
 			}
 		}
 		catch (err) {
-			let errResponse: ErrorResponse;
+			let errResponse: BaseResponse;
 			if (err instanceof WebSocketError) {
 				errResponse = {
 					type: err.type,
