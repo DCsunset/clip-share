@@ -70,7 +70,9 @@ export interface BaseRequest {
 export interface PairRequest extends BaseRequest {
 	/// the device to pair (fingerprint)
 	device: string;
-	/// public key for e2ee
+	/// device name
+	name: string;
+	/// sender's public key for e2ee
 	publicKey: string;
 }
 
@@ -107,6 +109,7 @@ export interface BaseResponse {
  * @see {isErrorResponse} ts-auto-guard:type-guard
  */
 export interface ErrorResponse extends BaseResponse {
+	success: false;
 	error: string;
 };
 
