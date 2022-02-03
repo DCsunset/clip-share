@@ -1,44 +1,47 @@
-import { useState } from 'react'
-import logo from './logo.svg'
+import {
+  createTheme,
+  CssBaseline,
+  ThemeProvider
+} from '@mui/material'
+import { blue, green, grey } from '@mui/material/colors';
+
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const theme = createTheme({
+  palette: {
+    mode: "dark",
+    primary: {
+      main: blue[500],
+      contrastText: "#fff"
+    },
+    secondary: {
+      main: green[500],
+      contrastText: "#fff"
+    },
+    neutral: {
+      main: grey[900],
+      dark: "#323232",
+      contrastText: "#fff"
+    }
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          // With darker linear-gradient backgroundImage in dark mode
+          backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02))"
+        }
+      }
+    }
+  }
+});
 
+function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <h1>Hellow</h1>
+    </ThemeProvider>
   )
 }
 
