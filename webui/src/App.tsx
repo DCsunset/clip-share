@@ -6,6 +6,7 @@ import {
 import { blue, green, grey } from '@mui/material/colors';
 
 import './App.css'
+import Layout from './components/Layout';
 
 const theme = createTheme({
   palette: {
@@ -40,7 +41,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <h1>Hellow</h1>
+      <Layout>
+        <h1>Hellow</h1>
+      </Layout>
     </ThemeProvider>
   )
 }
