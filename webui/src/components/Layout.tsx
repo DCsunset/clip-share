@@ -5,7 +5,6 @@ import { appActions } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { Notification } from "../types/app";
 import Logo from "../logo.svg";
-import { blue } from "@mui/material/colors";
 
 type Props = {
 	children?: any
@@ -36,15 +35,15 @@ function Layout(props: Props) {
 			display: "flex",
 			flexDirection: "column"
 		}}>
-			<AppBar position="sticky" style={{ backgroundColor: blue[700] }}>
-				<Toolbar style={{ minHeight: "52px" }}>
+			<AppBar position="sticky">
+				<Toolbar style={{ minHeight: "56px" }}>
 					<Box sx={{
 						display: "flex",
 						mr: 1.2
 					}}>
 						<img width="32px" src={Logo} alt="Portal" />
 					</Box>
-					<Typography variant="h6" noWrap>
+					<Typography variant="h5" noWrap>
 						Clip Share
 					</Typography>
 

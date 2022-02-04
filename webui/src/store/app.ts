@@ -1,13 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
-import { Notification } from "../types/app";
+import { DeviceType, Notification } from "../types/app";
 
 export type NewNotification = Omit<Notification, "id">;
 
 const appSlice = createSlice({
 	name: "app",
 	initialState: {
-		notifications: [] as Notification[]
+		notifications: [] as Notification[],
+		showDevices: {
+			"paired": true,
+			"new": true
+		}
 	},
 	reducers: {
 		addNotification(state, action: PayloadAction<NewNotification>) {
@@ -19,6 +23,13 @@ const appSlice = createSlice({
 		// remove the first notification
 		removeNotification(state, action: PayloadAction<string>) {
 			_.remove(state.notifications, e => e.id === action.payload);
+		},
+		
+		setShowDevices(state, action: PayloadAction<{
+			type: DeviceType,
+			value: boolean
+		}>) {
+			state.showDevices[action.payload.type] = action.payload.value;
 		}
 	}
 });

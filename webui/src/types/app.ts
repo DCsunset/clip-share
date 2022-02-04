@@ -11,3 +11,5 @@ export type Notification = {
 	color: AlertColor,
 	text: string
 };
+
+export type DeviceType = "paired" | "new";

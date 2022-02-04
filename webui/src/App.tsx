@@ -1,11 +1,15 @@
 import {
+  Box,
+  Container,
   createTheme,
   CssBaseline,
+  Grid,
   ThemeProvider
 } from '@mui/material'
 import { blue, green, grey } from '@mui/material/colors';
 
 import './App.css'
+import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 
 const theme = createTheme({
@@ -48,10 +52,19 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Layout>
-        <h1>Hellow</h1>
+        <Container sx={{ px: 1, py: 2 }} >
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="paired" />
+            </Grid>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="new" />
+            </Grid>
+          </Grid>
+        </Container>
       </Layout>
     </ThemeProvider>
   )
 }
 
-export default App
+export default App;
