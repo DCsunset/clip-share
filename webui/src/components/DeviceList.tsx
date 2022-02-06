@@ -7,7 +7,7 @@ import {
   Typography
 } from '@mui/material';
 import {
-	mdiChevronDown
+	mdiChevronDown, mdiLaptop, mdiLinkVariant
 } from "@mdi/js";
 import { useRootDispatch, useRootSelector } from '../store/hooks';
 import { DeviceType } from '../types/app';
@@ -24,6 +24,8 @@ type Props = {
 function DeviceList(props: Props) {
 	const showDevices = useRootSelector(state => state.app.showDevices[props.type]);
 	const dispatch = useRootDispatch();
+	
+	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
 	return (
 		<Card>
@@ -31,6 +33,15 @@ function DeviceList(props: Props) {
 				<Box sx={{
 					display: "flex"
 				}}>
+					<Box sx={{
+						display: "inline-flex",
+						alignItems: "center",
+						mr: 1.2,
+						mt: 0.2
+					}}>
+						<Icon path={icon} size={1} />
+					</Box>
+
 					<Typography
 						variant="h6"
 						style={{
