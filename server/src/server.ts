@@ -217,7 +217,11 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 		}
 	});
 
-	// TODO: remove from onlineDevice when connection closed
+	// remove from onlineDevice when connection closed
+	connection.socket.on("close", () => {
+		onlineDevices.delete(fingerprint);
+		console.log(`Device ${name} (${fingerprint}) disconnects`);
+	});
 });
 
 const start = async () => {
