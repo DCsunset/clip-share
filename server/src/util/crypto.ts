@@ -3,9 +3,12 @@ import { DateTime } from "luxon";
 import { HttpError } from "../types";
 
 export function getKeyInfo(publicKey: openpgp.Key) {
+	// fingerprint is human-readable format
 	return {
 		name: publicKey.getUserIDs().join(", "),
 		fingerprint: publicKey.getFingerprint()
+			.match(/.{1,2}/g)!
+			.join(":")
 	};
 };
 
