@@ -1,18 +1,22 @@
-import { Alert, AppBar, duration, Snackbar, Toolbar, Typography } from "@mui/material";
+import { Alert, AppBar, duration, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useState } from "react";
 import { appActions } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { Notification } from "../types/app";
 import Logo from "../logo.svg";
+import { mdiCog } from "@mdi/js";
+import Icon from "@mdi/react";
+import SettingsDialog from "./SettingsDialog";
 
-type Props = {
+interface Props {
 	children?: any
 };
 
 function Layout(props: Props) {
 	const notifications = useRootSelector(state => state.app.notifications);
 	const dispatch = useRootDispatch();
+	const [settingsDialog, setSettingsDialog] = useState(false);
 
 	// Notifications to be removed
 	const [invalidNotifications, setInvalidNotifications] = useState([] as string[]);
@@ -48,6 +52,14 @@ function Layout(props: Props) {
 					</Typography>
 
 					<span style={{ flexGrow: 1 }} />
+
+					<IconButton
+						color="inherit"
+						title="Settings"
+						onClick={() => setSettingsDialog(true)}
+					>
+						<Icon path={mdiCog} size={1} />
+					</IconButton>
 				</Toolbar>
 			</AppBar>
 
@@ -72,6 +84,8 @@ function Layout(props: Props) {
 					</Alert>
 				</Snackbar>
 			))}
+			
+			<SettingsDialog open={settingsDialog} onClose={() => setSettingsDialog(false)} />
 
 			<div style={{ height: "100%" }}>
 				{props.children}
