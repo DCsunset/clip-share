@@ -34,7 +34,7 @@ function DeviceList(props: Props) {
 					display: "flex"
 				}}>
 					<Box sx={{
-						display: "inline-flex",
+						display: "flex",
 						alignItems: "center",
 						mr: 1.2,
 						mt: 0.2
