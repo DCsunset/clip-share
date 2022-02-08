@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { appReducer } from "./app";
+import { settingsReducer } from "./settings";
 
 const store = configureStore({
 	reducer: {
-		app: appReducer
+		app: appReducer,
+		settings: settingsReducer
 	}
 });
 
