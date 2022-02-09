@@ -30,7 +30,9 @@ function SettingsDialog(props: Props) {
 		let updated = false;
 		if (settings.server != server) {
 			updated = true;
-			dispatch(settingsActions.setServer(server))
+			dispatch(settingsActions.update({
+				server
+			}))
 		}
 		
 		if (updated) {

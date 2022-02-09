@@ -9,6 +9,25 @@ const store = configureStore({
 	}
 });
 
+function saveState(state: object) {
+	try {
+		const serializedState = JSON.stringify(state);
+		localStorage.setItem("clip-share", serializedState);
+	}
+	catch (err) {
+		console.error(err);
+	}
+}
+
+let lastModified = new Date().getTime();
+store.subscribe(() => {
+	const state = store.getState().settings;
+	if (lastModified < state.lastModified) {
+		lastModified = state.lastModified;
+		saveState(state);
+	}
+});
+
 export default store;
 
 export type RootState = ReturnType<typeof store.getState>;
