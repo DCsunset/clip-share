@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { FastifyRequest } from "fastify";
 import FastifyWebSocket from "fastify-websocket";
 import FastifyCookie from "fastify-cookie";
 import openpgp from "openpgp";
@@ -21,7 +21,7 @@ import {
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
 import { generateToken, verifyToken } from "./utils/token";
-import { getKeyInfo, verifyChallengeReponse } from "./utils/crypto";
+import { getFingerprint, verifyChallengeReponse } from "./utils/crypto";
 
 const config = readConfig();
 
@@ -79,8 +79,8 @@ fastify.post("/session", async (req, reply) => {
 
 	await verifyChallengeReponse(publicKey, body.challengeResponse);
 
-	const keyInfo = getKeyInfo(publicKey);
-	const token = generateToken(keyInfo, config);
+	const fingerprint = getFingerprint(publicKey);
+	const token = generateToken({ fingerprint }, config);
 	if (body.cookie) {
 		reply.setCookie(config.jwt.cookieName, token, {
 			httpOnly: true,
@@ -109,22 +109,31 @@ fastify.delete("/session", async (_req, reply) => {
 	reply.statusCode = 204;
 });
 
+type RequestType = FastifyRequest<{
+	Querystring: {
+		name?: string
+	}
+}>
 
 // Connect via WebSocket
-fastify.get("/", { websocket: true }, async (connection, req) => {
+fastify.get("/", { websocket: true }, async (connection, req: RequestType) => {
 	const payload = verifyToken(req.token, config);
 	if (payload === null) {
 		throw new HttpError(401, "Unauthorized");
 	}
 
-	const { fingerprint, name } = payload;
+	const { fingerprint } = payload;
 
 	if (onlineDevices.has(fingerprint)) {
 		throw new HttpError(409, "Device of this key already online");
 	}
+	
+	if (!req.query.name) {
+		throw new HttpError(400, "Devicce name not set");
+	}
 
 	onlineDevices.set(fingerprint, {
-		name,
+		name: req.query.name,
 		websocket: connection.socket
 	});
 
@@ -166,7 +175,7 @@ fastify.get("/", { websocket: true }, async (connection, req) => {
 						}
 						// Send sender's info to receiver
 						pairMessage.device = fingerprint
-						pairMessage.name = name;
+						pairMessage.name = onlineDevices.get(fingerprint)!.name;
 
 						info.websocket.send(pairMessage);
 						break;

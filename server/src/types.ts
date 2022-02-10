@@ -5,7 +5,6 @@ import { WebSocket } from "ws";
  */
 export interface TokenPayload {
 	fingerprint: string;
-	name: string;
 }
 
 export class HttpError extends Error {
@@ -42,7 +41,7 @@ export type DeviceInfo = {
  * @see {isSessionRequest} ts-auto-guard:type-guard
  */
 export type SessionRequest = {
-	// OpenPGP armored public key (userID as device name)
+	// OpenPGP armored public key (userID not used)
 	publicKey: string;
 	// Sign the challenge string (OpenPGP message format)
 	challengeResponse: string;

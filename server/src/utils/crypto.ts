@@ -2,14 +2,11 @@ import openpgp from "openpgp";
 import { DateTime } from "luxon";
 import { HttpError } from "../types";
 
-export function getKeyInfo(publicKey: openpgp.Key) {
+export function getFingerprint(publicKey: openpgp.Key) {
 	// fingerprint is human-readable format
-	return {
-		name: publicKey.getUserIDs().join(", "),
-		fingerprint: publicKey.getFingerprint()
-			.match(/.{1,2}/g)!
-			.join(":")
-	};
+	return publicKey.getFingerprint()
+		.match(/.{1,2}/g)!
+		.join(":");
 };
 
 export async function verifyChallengeReponse(publicKey: openpgp.Key, response: string) {
