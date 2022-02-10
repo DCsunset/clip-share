@@ -4,6 +4,8 @@ import FastifyCookie from "fastify-cookie";
 import openpgp from "openpgp";
 import {
 	BaseMessage,
+	DataBuffer,
+	DataType,
 	DeviceInfo,
 	HttpError,
 	ListResponse,
@@ -36,9 +38,30 @@ fastify.register(tokenPlugin, {
 
 // Server state: Map<fingerprint, Device>
 const onlineDevices: Map<string, DeviceInfo> = new Map();
-// Unsent clipboard data (wait until device online)
-// Map<fingerprint, content>
-const clipboard: Map<string, string> = new Map();
+// Buffer unsent data (wait until device online)
+// Map<fingerprint, buffer>
+const buffer: Map<string, DataBuffer> = new Map();
+const bufferSize = {
+	clipboard: 1,
+	notification: 5
+};
+
+function addToBuffer(fromDevice: string, toDevice: string, message: ShareMessage["message"]) {
+	if (!buffer.has(toDevice)) {
+		buffer.set(toDevice, {
+			clipboard: [],
+			notification: []
+		});
+	}
+	const buf = buffer.get(toDevice)!;
+	buf[message.type].push({
+		from: fromDevice,
+		data: message.data
+	});
+	if (buf[message.type].length > bufferSize[message.type]) {
+		buf[message.type].shift();
+	}
+}
 
 // Custom error handler
 fastify.setErrorHandler(function (err, _req, reply) {
@@ -136,6 +159,26 @@ fastify.get("/", { websocket: true }, async (connection, req: RequestType) => {
 		name: req.query.name,
 		websocket: connection.socket
 	});
+	
+	// send buffered data
+	if (buffer.has(fingerprint)) {
+		const buf = buffer.get(fingerprint)!;
+		const types: DataType[] = ["clipboard", "notification"];
+		for (const type of types) {
+			for (const data of buf[type]) {
+				const shareMessage: ShareMessage = {
+					type: "share",
+					success: true,
+					device: data.from,
+					message: {
+						type,
+						data: data.data
+					}
+				};
+				connection.socket.send(shareMessage);
+			}
+		}
+	}
 
 	connection.socket.on("message", message => {
 		try {
@@ -186,15 +229,16 @@ fastify.get("/", { websocket: true }, async (connection, req: RequestType) => {
 						}
 						const shareMessage = baseMessage as ShareMessage;
 						if (!onlineDevices.has(shareMessage.device)) {
-							throw new WebSocketError("share", "Device not online");
+							addToBuffer(fingerprint, shareMessage.device, shareMessage.message);
 						}
+						else {
+							// Info of the other devices
+							const info = onlineDevices.get(shareMessage.device)!;
+							// Send sender's info to receiver
+							shareMessage.device = fingerprint
 
-						// Info of the other devices
-						const info = onlineDevices.get(shareMessage.device)!;
-						// Send sender's info to receiver
-						shareMessage.device = fingerprint
-
-						info.websocket.send(shareMessage);
+							info.websocket.send(shareMessage);
+						}
 						break;
 					}
 					default:

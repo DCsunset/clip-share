@@ -35,6 +35,23 @@ export type DeviceInfo = {
 	websocket: WebSocket;
 };
 
+/* Data type shared between devices
+ * 2 types of data:
+ *  clipboard
+ *  notification
+ */
+export type DataType = "clipboard" | "notification";
+
+/**
+ * Buffer shared data
+ */
+export type DataBuffer = {
+	[type in DataType]: {
+		from: string;
+		data: string;
+	}[];
+};
+
 /**
  * Requst to create a session (log in)
  * 
@@ -94,7 +111,7 @@ export interface PairMessage extends BaseMessage {
 	name: string;
 	/// sender's public key for e2ee
 	publicKey?: string;
-}
+};
 
 /**
  * Request to share message
@@ -106,7 +123,10 @@ export interface ShareMessage extends BaseMessage {
 	/// the device to share (fingerprint)
 	device: string;
 	/// e2e encrypted message
-	message: string;
+	message: {
+		type: DataType;
+		data: string;
+	}
 }
 
 export class WebSocketError extends Error {
