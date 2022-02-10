@@ -20,9 +20,8 @@ import {
 } from "./types.guard";
 import { readConfig } from "./config";
 import tokenPlugin from "./plugins/token";
-import { generateToken, verifyToken } from "./util/token";
-import { getKeyInfo, verifyChallengeReponse } from "./util/crypto";
-import { isSharedArrayBuffer } from "util/types";
+import { generateToken, verifyToken } from "./utils/token";
+import { getKeyInfo, verifyChallengeReponse } from "./utils/crypto";
 
 const config = readConfig();
 
