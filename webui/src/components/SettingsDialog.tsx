@@ -99,8 +99,13 @@ function SettingsDialog(props: Props) {
 			<DialogContent>
 				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
-						<ListItemText secondary="server address">
-							Server
+						<ListItemText secondary={
+							<span>
+								starting with <code>ws://</code>
+								&nbsp;or <code>wss://</code>
+							</span>
+						}>
+							Server URL
 						</ListItemText>
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">

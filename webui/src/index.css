@@ -1,3 +1,11 @@
 body {
   margin: 0;
 }
+
+code {
+  background-color: #2f2f2f;
+	padding: 1px 0.4em 1px 0.4em;
+  border-radius: 4px;
+	font-size: 95%;
+	margin: 2px;
+}

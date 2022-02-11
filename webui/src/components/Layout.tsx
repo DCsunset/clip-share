@@ -86,8 +86,8 @@ function Layout(props: Props) {
 
 					<Box title={wsStatus.text} sx={{
 						backgroundColor: wsStatus.color,
-						width: "14px",
-						height: "14px",
+						width: "12px",
+						height: "12px",
 						borderRadius: "50%",
 						mr: 1.5
 					}} />
