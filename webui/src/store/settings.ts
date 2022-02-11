@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceInfo } from "../types/settings";
+import { initSettings } from "./async-actions";
 
 type State = {
-	deviceInfo: DeviceInfo,
+	deviceInfo: Required<DeviceInfo>,
 	pairedDevices: DeviceInfo[],
 	// server address
 	server: string;
@@ -19,7 +20,7 @@ function loadState() {
 
 // Initialize when no persistent state
 const initialState: State = loadState() || {
-	// TODO: generate keys
+	// keys should be initialized by calling initSettings()
 	deviceInfo: {
 		name: "",
 		privateKey: "",
@@ -30,7 +31,7 @@ const initialState: State = loadState() || {
 	server: "",
 	// timestamp
 	lastModified: new Date().getTime()
-};
+} as State;
 
 const settingsSlice = createSlice({
 	name: "settings",
@@ -49,6 +50,13 @@ const settingsSlice = createSlice({
 			_.pullAt(state.pairedDevices, action.payload);
 			state.lastModified = new Date().getTime();
 		}
+	},
+	extraReducers(builder) {
+		// initSettings
+		builder.addCase(initSettings.fulfilled, (state, action) => {
+			const { publicKey, privateKey } = action.payload;
+			Object.assign(state.deviceInfo, { publicKey, privateKey });
+		});
 	}
 });
 

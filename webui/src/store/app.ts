@@ -1,24 +1,39 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceType, Notification } from "../types/app";
+import { initSettings } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
 
+const initialState = {
+	notifications: [] as Notification[],
+	showDevices: {
+		"paired": true,
+		"new": true
+	}
+};
+
+const createNotification = (payload: NewNotification) => ({
+	...payload,
+	id: new Date().toISOString()
+});
+
+const handleError = (state: typeof initialState, action: any) => {
+	const error = action.error;
+	let message: string;
+	message = (error as Error).message;
+	state.notifications.push(createNotification({
+		color: "error",
+		text: message
+	}));
+};
+
 const appSlice = createSlice({
 	name: "app",
-	initialState: {
-		notifications: [] as Notification[],
-		showDevices: {
-			"paired": true,
-			"new": true
-		}
-	},
+	initialState,
 	reducers: {
 		addNotification(state, action: PayloadAction<NewNotification>) {
-			state.notifications.push({
-				...action.payload,
-				id: new Date().toISOString()
-			});
+			state.notifications.push(createNotification(action.payload));
 		},
 		// remove the first notification
 		removeNotification(state, action: PayloadAction<string>) {
@@ -31,6 +46,10 @@ const appSlice = createSlice({
 		}>) {
 			state.showDevices[action.payload.type] = action.payload.value;
 		}
+	},
+	extraReducers(builder) {
+		// initSettings
+		builder.addCase(initSettings.rejected, handleError);
 	}
 });
 
