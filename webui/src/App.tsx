@@ -7,10 +7,11 @@ import {
   ThemeProvider
 } from '@mui/material'
 import { blue, green, grey } from '@mui/material/colors';
-
-import './App.css'
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
+import './App.css';
+import { WebSocketContext } from './contexts/WebSocketConntext';
+import { useState } from 'react';
 
 const theme = createTheme({
   typography: {
@@ -48,22 +49,27 @@ const theme = createTheme({
 });
 
 function App() {
+  // Share ws in all child components
+  const [ws, setWs] = useState<WebSocket | null>(null);
+
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Layout>
-        <Container sx={{ px: 1, py: 2 }} >
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="paired" />
+    <WebSocketContext.Provider value={{ ws, setWs }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Layout>
+          <Container sx={{ px: 1, py: 2 }} >
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6} sx={{ p: 1 }}>
+                <DeviceList type="paired" />
+              </Grid>
+              <Grid item xs={12} md={6} sx={{ p: 1 }}>
+                <DeviceList type="new" />
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="new" />
-            </Grid>
-          </Grid>
-        </Container>
-      </Layout>
-    </ThemeProvider>
+          </Container>
+        </Layout>
+      </ThemeProvider>
+    </WebSocketContext.Provider>
   )
 }
 

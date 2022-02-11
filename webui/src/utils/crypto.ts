@@ -1,4 +1,4 @@
-import openpgp from "openpgp";
+import * as openpgp from "openpgp";
 
 export async function generateKeyPairs() {
 	return await openpgp.generateKey({

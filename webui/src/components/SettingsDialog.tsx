@@ -11,7 +11,8 @@ import {
 	ListItemText,
 	TextField
 } from "@mui/material";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { WebSocketContext } from "../contexts/WebSocketConntext";
 import { appActions } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { settingsActions } from "../store/settings";
@@ -21,18 +22,44 @@ interface Props {
 	onClose: () => void;
 };
 
+function connectToServer(server: string) {
+	// create a new connection
+	const ws = server.length > 0 ?
+		new WebSocket(server) : null;
+	
+	if (ws) {
+		// TODO: handle events
+	}
+		
+	return ws;
+}
+
 function SettingsDialog(props: Props) {
 	const settings = useRootSelector(state => state.settings);
 	const dispatch = useRootDispatch();
 	const [server, setServer] = useState(settings.server);
+	const { setWs } = useContext(WebSocketContext);
 	
 	const save = () => {
 		let updated = false;
 		if (settings.server != server) {
+			// create a new connection
+			try {
+				const ws = connectToServer(server);
+				setWs(ws);
+			}
+			catch (err) {
+				dispatch(appActions.addNotification({
+					color: "error",
+					text: `Error: ${(err as Error).message}`
+				}));
+				return;
+			}
+
 			updated = true;
 			dispatch(settingsActions.update({
 				server
-			}))
+			}));
 		}
 		
 		if (updated) {
@@ -79,6 +106,7 @@ function SettingsDialog(props: Props) {
 					<Grid item display="inline-flex" alignItems="center">
 						<TextField
 							variant="standard"
+							placeholder="(Not set)"
 							value={server}
 							onChange={event => setServer(event.target.value)}
 						/>
