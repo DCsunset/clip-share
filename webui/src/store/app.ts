@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceType, Notification } from "../types/app";
+import { DeviceInfo } from "../types/settings";
+import { ListResponse } from "../types/types";
 import { initSettings } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
@@ -10,7 +12,8 @@ const initialState = {
 	showDevices: {
 		"paired": true,
 		"new": true
-	}
+	},
+	onlineDevices: [] as ListResponse["devices"]
 };
 
 const createNotification = (payload: NewNotification) => ({
@@ -45,6 +48,9 @@ const appSlice = createSlice({
 			value: boolean
 		}>) {
 			state.showDevices[action.payload.type] = action.payload.value;
+		},
+		setOnlineDevices(state, action: PayloadAction<ListResponse["devices"]>) {
+			state.onlineDevices = action.payload;
 		}
 	},
 	extraReducers(builder) {

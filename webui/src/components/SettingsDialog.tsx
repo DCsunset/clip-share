@@ -1,4 +1,4 @@
-import { mdiCog } from "@mdi/js";
+import { mdiCog, mdiServerSecurity } from "@mdi/js";
 import Icon from "@mdi/react";
 import {
 	Box,
@@ -16,20 +16,73 @@ import { WebSocketContext } from "../contexts/WebSocketConntext";
 import { appActions } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { settingsActions } from "../store/settings";
+import { BaseMessage, ListResponse } from "../types/types";
+import { isBaseMessage, isListResponse } from "../types/types.guard";
 
 interface Props {
 	open: boolean;
 	onClose: () => void;
 };
 
-function connectToServer(server: string) {
+function connectToServer(server: string, dispatch: ReturnType<typeof useRootDispatch>) {
+	if (server.length === 0)
+		return null;
+
+	const url = new URL(server);
+	// TODO: set device name in URL
+	/* url.searchParams.set("name", name); */
+
 	// create a new connection
-	const ws = server.length > 0 ?
-		new WebSocket(server) : null;
+	const ws = new WebSocket(url);
+	// TODO: handle events
+	ws.onerror = event => {
+		dispatch(appActions.addNotification({
+			color: "error",
+			text: `WebSocket Error: ${event}`
+		}));
+	};
 	
-	if (ws) {
-		// TODO: handle events
-	}
+	ws.onmessage = event => {
+		try {
+			const msg = JSON.parse(event.data);
+			// check type
+			if (isBaseMessage(msg)) {
+				const baseMessage = msg as BaseMessage;
+				if (!baseMessage.success) {
+					throw new Error(`Error response for ${baseMessage}: ${baseMessage.error}`);
+				}
+
+				switch (baseMessage.type) {
+					case "list": {
+						if (!isListResponse(baseMessage))
+							throw new Error(`Invalid message for type ${baseMessage.type}`);
+						const listResponse = baseMessage as ListResponse;
+						dispatch(appActions.setOnlineDevices(listResponse.devices));
+						break;
+					}
+					case "pair": {
+						// TODO
+						break;
+					}
+					case "share": {
+						// TODO
+						break;
+					}
+					default:
+						throw new Error(`Invalid message type: ${baseMessage.type}`);
+				}
+			}
+			else {
+				throw new Error("Invalid message");
+			}
+		}
+		catch (err) {
+			dispatch(appActions.addNotification({
+				color: "error",
+				text: `WebSocket Error: ${(err as Error).message}`
+			}));
+		}
+	};
 		
 	return ws;
 }
@@ -45,7 +98,7 @@ function SettingsDialog(props: Props) {
 		if (settings.server != server) {
 			// create a new connection
 			try {
-				const ws = connectToServer(server);
+				const ws = connectToServer(server, dispatch);
 				setWs(ws);
 			}
 			catch (err) {
