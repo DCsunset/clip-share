@@ -1,4 +1,4 @@
-import { mdiCog, mdiServerSecurity } from "@mdi/js";
+import { mdiCog } from "@mdi/js";
 import Icon from "@mdi/react";
 import {
 	Box,
@@ -15,7 +15,7 @@ import { useContext, useState } from "react";
 import { WebSocketContext } from "../contexts/WebSocketConntext";
 import { appActions } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
-import { settingsActions } from "../store/settings";
+import { settingsActions, SettingsState } from "../store/settings";
 import { BaseMessage, ListResponse } from "../types/types";
 import { isBaseMessage, isListResponse } from "../types/types.guard";
 
@@ -24,11 +24,12 @@ interface Props {
 	onClose: () => void;
 };
 
-function connectToServer(server: string, dispatch: ReturnType<typeof useRootDispatch>) {
-	if (server.length === 0)
+function connectToServer(server: SettingsState["server"], dispatch: ReturnType<typeof useRootDispatch>) {
+	if (server.address.length === 0)
 		return null;
 
-	const url = new URL(server);
+	const url = new URL(`wss://${server}`);
+	url.pathname = server.pathPrefix;
 	// TODO: set device name in URL
 	/* url.searchParams.set("name", name); */
 
@@ -90,9 +91,9 @@ function connectToServer(server: string, dispatch: ReturnType<typeof useRootDisp
 function SettingsDialog(props: Props) {
 	const settings = useRootSelector(state => state.settings);
 	const dispatch = useRootDispatch();
-	const [server, setServer] = useState(settings.server);
+	const [server, setServer] = useState({ ...settings.server });
 	const { setWs } = useContext(WebSocketContext);
-	
+
 	const save = () => {
 		let updated = false;
 		if (settings.server != server) {
@@ -152,21 +153,42 @@ function SettingsDialog(props: Props) {
 			<DialogContent>
 				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
-						<ListItemText secondary={
-							<span>
-								starting with <code>ws://</code>
-								&nbsp;or <code>wss://</code>
-							</span>
-						}>
-							Server URL
+						<ListItemText secondary="host address (not URL)">
+							Server Address
 						</ListItemText>
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">
 						<TextField
 							variant="standard"
 							placeholder="(Not set)"
-							value={server}
-							onChange={event => setServer(event.target.value)}
+							value={server.address}
+							onChange={event => setServer({
+								...server,
+								address: event.target.value
+							})}
+						/>
+					</Grid>
+				</Grid>
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary={
+							<span>
+								prefix for all API endpoint.
+								(default: <code>/</code>)
+							</span>
+						}>
+							Path Prefix
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<TextField
+							variant="standard"
+							placeholder="(Optional)"
+							value={server.pathPrefix}
+							onChange={event => setServer({
+								...server,
+								pathPrefix: event.target.value
+							})}
 						/>
 					</Grid>
 				</Grid>

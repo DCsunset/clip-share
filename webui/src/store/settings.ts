@@ -3,11 +3,13 @@ import _ from "lodash";
 import { DeviceInfo } from "../types/settings";
 import { initSettings } from "./async-actions";
 
-type State = {
+export type SettingsState = {
 	deviceInfo: Required<DeviceInfo>,
 	pairedDevices: DeviceInfo[],
-	// server address
-	server: string;
+	server: {
+		address: string;
+		pathPrefix: string;
+	};
 	lastModified: number;
 };
 
@@ -19,7 +21,7 @@ function loadState() {
 }
 
 // Initialize when no persistent state
-const initialState: State = loadState() || {
+const initialState: SettingsState = loadState() || {
 	// keys should be initialized by calling initSettings()
 	deviceInfo: {
 		name: "",
@@ -27,17 +29,21 @@ const initialState: State = loadState() || {
 		publicKey: ""
 	},
 	pairedDevices: [],
-	// server address
-	server: "",
+	// server
+	server: {
+		// empty means not set
+		address: "",
+		pathPrefix: ""
+	},
 	// timestamp
 	lastModified: new Date().getTime()
-} as State;
+} as SettingsState;
 
 const settingsSlice = createSlice({
 	name: "settings",
 	initialState,
 	reducers: {
-		update(state, action: PayloadAction<Partial<State>>) {
+		update(state, action: PayloadAction<Partial<SettingsState>>) {
 			Object.assign(state, action.payload);
 			state.lastModified = new Date().getTime();
 		},
