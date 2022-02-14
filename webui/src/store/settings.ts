@@ -5,10 +5,13 @@ import { initSettings } from "./async-actions";
 
 export type SettingsState = {
 	deviceInfo: Required<DeviceInfo>,
+	// JWT token
+	token: string | null,
 	pairedDevices: DeviceInfo[],
 	server: {
 		address: string;
 		pathPrefix: string;
+		tls: boolean;
 	};
 	lastModified: number;
 };
@@ -28,12 +31,14 @@ const initialState: SettingsState = loadState() || {
 		privateKey: "",
 		publicKey: ""
 	},
+	token: null,
 	pairedDevices: [],
 	// server
 	server: {
 		// empty means not set
 		address: "",
-		pathPrefix: ""
+		pathPrefix: "",
+		tls: false
 	},
 	// timestamp
 	lastModified: new Date().getTime()
@@ -65,6 +70,14 @@ const settingsSlice = createSlice({
 		});
 	}
 });
+
+// Selectors
+export const selectServerBaseUrl = (protocol: "http" | "ws") => (state: SettingsState) => {
+	const finalProtocol = `${protocol}${state.server.tls ? "s" : ""}`;
+	const url = new URL(`${finalProtocol}://${state.server.address}`);
+	url.pathname = state.server.pathPrefix;
+	return url.href;
+};
 
 export const settingsActions = settingsSlice.actions;
 export const settingsReducer = settingsSlice.reducer;
