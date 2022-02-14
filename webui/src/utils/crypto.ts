@@ -9,3 +9,18 @@ export async function generateKeyPairs() {
 		format: "armored"
 	});
 };
+
+export async function generateChallengeResponse(armoredPrivateKey: string) {
+	const privateKey = await openpgp.readPrivateKey({
+		armoredKey: armoredPrivateKey
+	});
+	const message = await openpgp.createMessage({
+		text: `clip-share-${new Date().toISOString()}`
+	});
+	const signedMessage = await openpgp.sign({
+		message,
+		signingKeys: privateKey
+	});
+
+	return signedMessage;
+}
