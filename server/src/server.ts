@@ -1,52 +1,28 @@
-import Fastify, { FastifyRequest } from "fastify";
-import FastifyWebSocket from "fastify-websocket";
-import FastifyCookie from "fastify-cookie";
-import openpgp from "openpgp";
+import { Server } from "socket.io";
 import {
-	BaseMessage,
+	AuthRequest,
 	DataBuffer,
 	DataType,
 	DeviceInfo,
-	HttpError,
 	ListResponse,
-	PairMessage,
-	SessionRequest,
-	ShareMessage,
-	WebSocketError
+	PairEvent,
+	ShareEvent,
 } from "./types";
 import {
-	isBaseMessage,
-	isPairMessage,
-	isSessionRequest,
-	isShareMessage
+	isAuthRequest,
+	isPairEvent,
+	isShareEvent,
 } from "./types.guard";
 import { readConfig } from "./config";
-import tokenPlugin from "./plugins/token";
-import { generateToken, verifyToken } from "./utils/token";
-import { getFingerprint, verifyChallengeReponse } from "./utils/crypto";
+import { getFingerprint, verifyChallenge } from "./utils/crypto";
+import { createServer } from "http";
 
 const config = readConfig();
-
-const fastify = Fastify({
-	logger: true
-});
-fastify.register(FastifyWebSocket);
-fastify.register(FastifyCookie);
-fastify.register(tokenPlugin, {
-	cookieName: config.jwt.cookieName
-});
-
-// Server state: Map<fingerprint, Device>
-const onlineDevices: Map<string, DeviceInfo> = new Map();
 // Buffer unsent data (wait until device online)
 // Map<fingerprint, buffer>
 const buffer: Map<string, DataBuffer> = new Map();
-const bufferSize = {
-	clipboard: 1,
-	notification: 5
-};
 
-function addToBuffer(fromDevice: string, toDevice: string, message: ShareMessage["message"]) {
+function addToBuffer(fromDevice: string, toDevice: string, data: ShareEvent["data"]) {
 	if (!buffer.has(toDevice)) {
 		buffer.set(toDevice, {
 			clipboard: [],
@@ -54,239 +30,153 @@ function addToBuffer(fromDevice: string, toDevice: string, message: ShareMessage
 		});
 	}
 	const buf = buffer.get(toDevice)!;
-	buf[message.type].push({
+	buf[data.type].push({
 		from: fromDevice,
-		data: message.data
+		content: data.content
 	});
-	if (buf[message.type].length > bufferSize[message.type]) {
-		buf[message.type].shift();
+	if (buf[data.type].length > config.bufferSize[data.type]) {
+		buf[data.type].shift();
 	}
 }
 
-// Custom error handler
-fastify.setErrorHandler(function (err, _req, reply) {
-	if (err instanceof HttpError) {
-		reply.statusCode = err.statusCode;
-		reply.send(err.message);
-		this.log.info(err.message);
-	}
-	else {
-		reply.statusCode = 500;
-		reply.send("Internal Server Error");
-		this.log.error(err);
-	}
+
+// Map device id to device info
+const onlineDevices = new Map<string, DeviceInfo>();
+// Map connections to device id
+const connectionMap = new Map<string, string>();
+
+const io = new Server({
+	// websocket only
+	transports: ["websocket"]
 });
 
-// Create a session (log in using challenge response)
-// Challenge: sign an ISO date with prefix within 1 hour (avoid time asynchrony)
-fastify.post("/session", async (req, reply) => {
-	if (!verifyToken(req.token, config)) {
-		throw new HttpError(401, "Unauthorized");
-	}
-
-	if (!isSessionRequest(req.body)) {
-		throw new HttpError(400, "Bad request");
-	}
-
-	const body = req.body as SessionRequest;
-
-	let publicKey: openpgp.Key;
+io.on("connection", async socket => {
 	try {
-		publicKey = await openpgp.readKey({
-			armoredKey: body.publicKey
-		});
-	}
-	catch (err) {
-		throw new HttpError(401, "Invalid public key");
-	}
-
-	await verifyChallengeReponse(publicKey, body.challengeResponse);
-
-	const fingerprint = getFingerprint(publicKey);
-	const token = generateToken({ fingerprint }, config);
-	if (body.cookie) {
-		reply.setCookie(config.jwt.cookieName, token, {
-			httpOnly: true,
-			maxAge: config.jwt.maxAgeInDays * 24 * 3600
-		});
-		reply.statusCode = 204;
-	}
-	else {
-		reply.send(token);
-	}
-});
-
-// check login
-fastify.get("/session", async (req, reply) => {
-	if (verifyToken(req.token, config) !== null) {
-		reply.statusCode = 204;
-	}
-	else {
-		throw new HttpError(401, "Invalid or empty token")
-	}
-});
-
-// log out (cookie only)
-fastify.delete("/session", async (_req, reply) => {
-	reply.clearCookie(config.jwt.cookieName);
-	reply.statusCode = 204;
-});
-
-type RequestType = FastifyRequest<{
-	Querystring: {
-		name?: string
-	}
-}>
-
-// Connect via WebSocket
-fastify.get("/", { websocket: true }, async (connection, req: RequestType) => {
-	const payload = verifyToken(req.token, config);
-	if (payload === null) {
-		throw new HttpError(401, "Unauthorized");
-	}
-
-	const { fingerprint } = payload;
-
-	if (onlineDevices.has(fingerprint)) {
-		throw new HttpError(409, "Device of this key already online");
-	}
-	
-	if (!req.query.name) {
-		throw new HttpError(400, "Devicce name not set");
-	}
-
-	onlineDevices.set(fingerprint, {
-		name: req.query.name,
-		websocket: connection.socket
-	});
-	
-	// send buffered data
-	if (buffer.has(fingerprint)) {
-		const buf = buffer.get(fingerprint)!;
-		const types: DataType[] = ["clipboard", "notification"];
-		for (const type of types) {
-			for (const data of buf[type]) {
-				const shareMessage: ShareMessage = {
-					type: "share",
-					success: true,
-					device: data.from,
-					message: {
-						type,
-						data: data.data
-					}
-				};
-				connection.socket.send(shareMessage);
-			}
+		if (!isAuthRequest(socket.handshake.auth)) {
+			throw new Error("Invalid auth request");
 		}
-	}
+		const { challenge, publicKey, name } = socket.handshake.auth as AuthRequest;
 
-	connection.socket.on("message", message => {
-		try {
-			const rawData = JSON.parse(message.toString());
-			// check type
-			if (isBaseMessage(rawData)) {
-				const baseMessage = rawData as BaseMessage;
-				switch (baseMessage.type) {
-					case "list": {
-						const devices = Array.from(onlineDevices.entries())
-							.map(([fingerprint, info]) => ({
-								name: info.name,
-								fingerprint
-							}));
-						const listResponse: ListResponse = {
-							type: "list",
-							success: true,
-							devices
-						};
-						connection.socket.send(listResponse);
-						break;
-					}
-					case "pair": {
-						// Forward messages from devices
-						// check type
-						if (!isPairMessage(baseMessage)) {
-							throw new WebSocketError("pair", "Invalid request");
-						}
-						const pairMessage = baseMessage as PairMessage;
-						if (!onlineDevices.has(pairMessage.device)) {
-							throw new WebSocketError("pair", "Device not online");
-						}
-						// Info of the other devices
-						const info = onlineDevices.get(pairMessage.device)!;
-						if (info.name != pairMessage.name) {
-							throw new WebSocketError("pair", `Device name ${pairMessage.name} mismatched`);
-						}
-						// Send sender's info to receiver
-						pairMessage.device = fingerprint
-						pairMessage.name = onlineDevices.get(fingerprint)!.name;
+		// Auth via challenge response
+		// Challenge: sign an ISO date with prefix within 1 hour (avoid time asynchrony)
 
-						info.websocket.send(pairMessage);
-						break;
-					}
-					case "share": {
-						if (!isShareMessage(baseMessage)) {
-							throw new WebSocketError("share", "Invalid message");
-						}
-						const shareMessage = baseMessage as ShareMessage;
-						if (!onlineDevices.has(shareMessage.device)) {
-							addToBuffer(fingerprint, shareMessage.device, shareMessage.message);
-						}
-						else {
-							// Info of the other devices
-							const info = onlineDevices.get(shareMessage.device)!;
-							// Send sender's info to receiver
-							shareMessage.device = fingerprint
+		// Verify challenge
+		if (!await verifyChallenge(publicKey, challenge)) {
+			throw new Error("Invalid public key or challenge");
+		};
 
-							info.websocket.send(shareMessage);
+		if (connectionMap.has(socket.id)) {
+			throw new Error("Socket ID already used");
+		}
+
+		const deviceId = await getFingerprint(publicKey);
+		if (onlineDevices.has(deviceId)) {
+			throw new Error("Device already online");
+		}
+
+		connectionMap.set(socket.id, deviceId);
+		onlineDevices.set(deviceId, { name, socket });
+		console.log(`Device ${name} (${deviceId}) connects`);
+		
+		// Disconnection
+		socket.on("disconnect", () => {
+			connectionMap.delete(socket.id);
+			onlineDevices.delete(deviceId);
+			console.log(`Device ${name} (${deviceId}) disconnects`);
+		});
+
+		// send buffered data
+		if (buffer.has(deviceId)) {
+			const buf = buffer.get(deviceId)!;
+			const types: DataType[] = ["clipboard", "notification"];
+			for (const type of types) {
+				for (const data of buf[type]) {
+					const shareEvent: ShareEvent = {
+						deviceId: data.from,
+						data: {
+							type,
+							content: data.content
 						}
-						break;
-					}
-					default:
-						throw new WebSocketError("error", `Invalid message type: ${baseMessage.type}`);
+					};
+					socket.emit("share", shareEvent);
 				}
 			}
-			else {
-				throw new WebSocketError("error", "Invalid message");
-			}
 		}
-		catch (err) {
-			let errMessage: BaseMessage;
-			if (err instanceof WebSocketError) {
-				errMessage = {
-					type: err.type,
-					success: false,
-					error: `Error: ${err.message}`
-				};
+
+		// List request
+		socket.on("list", () => {
+			const devices = Array.from(onlineDevices.entries())
+				.map(([id, info]) => ({
+					id,
+					name: info.name,
+				}));
+			const listResponse: ListResponse = devices;
+			socket.emit("list", listResponse);
+		});
+		
+		// Pair device
+		socket.on("pair", data => {
+			// Forward messages from devices
+			// check type
+			if (!isPairEvent(data)) {
+				socket.emit("error", "Invalid pair request");
+				return;
+			}
+			const pairEvent = data as PairEvent;
+			if (!onlineDevices.has(pairEvent.deviceId)) {
+				socket.emit("error", "Device to pair not online");
+				return;
+			}
+
+			// Info of the other devices
+			const otherDevice = onlineDevices.get(pairEvent.deviceId)!;
+			if (otherDevice.name != pairEvent.name) {
+				socket.emit("error", `Device name ${pairEvent.name} mismatched`);
+				return;
+			}
+
+			// Send sender's info to receiver
+			otherDevice.socket.emit("pair", {
+				deviceId,
+				name,
+				publicKey: pairEvent.publicKey,
+			} as PairEvent);
+		});
+		
+		// Share data
+		socket.on("share", data => {
+			if (!isShareEvent(data)) {
+				socket.emit("error", "Invalid share event");
+				return;
+			}
+			const shareEvent = data as ShareEvent;
+			if (!onlineDevices.has(shareEvent.deviceId)) {
+				addToBuffer(deviceId, shareEvent.deviceId, shareEvent.data);
 			}
 			else {
-				errMessage = {
-					type: "error",
-					success: false,
-					error: `Internal Error: ${(err as Error).message}`
-				};
+				// Info of the other devices
+				const otherDevice = onlineDevices.get(shareEvent.deviceId)!;
+				// Send sender's info to receiver
+				otherDevice.socket.emit("share", {
+					...shareEvent,
+					deviceId
+				} as ShareEvent);
 			}
-			connection.socket.send(errMessage);
-		}
-	});
-
-	// remove from onlineDevice when connection closed
-	connection.socket.on("close", () => {
-		onlineDevices.delete(fingerprint);
-		console.log(`Device ${name} (${fingerprint}) disconnects`);
-	});
-});
-
-const start = async () => {
-	const isProduction = process.env.NODE_ENV === "production";
-	const address = isProduction ? "0.0.0.0" : "localhost";
-
-	try {
-		await fastify.listen(3000, address);
+		});
 	}
 	catch (err) {
-		fastify.log.error(err);
-		process.exit(1);
+		socket.emit("error", (err as Error).message);
+		socket.disconnect();
+		return;
 	}
-};
+});
 
-start();
+const httpServer = createServer();
+io.attach(httpServer);
+
+const isProduction = process.env.NODE_ENV === "production";
+const address = isProduction ? "0.0.0.0" : "localhost";
+const port = 3000;
+httpServer.listen(port, address, 128, () => {
+	console.log(`Listening at ${address}:${port}`);
+});

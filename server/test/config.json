@@ -1,7 +1,6 @@
 {
-	"jwt": {
-		"cookieName": "clip-share-token",
-		"secret": "test",
-		"maxAgeInDays": 30
+	"bufferSize": {
+		"clipboard": 1,
+		"notification": 5
 	}
 }

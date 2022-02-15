@@ -1,19 +1,24 @@
 import openpgp from "openpgp";
 import { DateTime } from "luxon";
-import { HttpError } from "../types";
 
-export function getFingerprint(publicKey: openpgp.Key) {
+export async function getFingerprint(armoredPublicKey: string) {
+	const publicKey = await openpgp.readKey({
+		armoredKey: armoredPublicKey
+	});
 	// fingerprint is human-readable format
 	return publicKey.getFingerprint()
 		.match(/.{1,2}/g)!
 		.join(":");
 };
 
-export async function verifyChallengeReponse(publicKey: openpgp.Key, response: string) {
+export async function verifyChallenge(armoredPublicKey: string, signedChallenge: string) {
 	let challenge: string;
 	try {
+		const publicKey = await openpgp.readKey({
+			armoredKey: armoredPublicKey
+		});
 		const message = await openpgp.readMessage({
-			armoredMessage: response
+			armoredMessage: signedChallenge
 		});
 		const result = await openpgp.verify({
 			message,
@@ -25,22 +30,22 @@ export async function verifyChallengeReponse(publicKey: openpgp.Key, response: s
 		}
 
 		challenge = result.data;
+
+		if (!challenge.startsWith("clip-share-")) {
+			throw new Error();
+		}
+
+		const timestamp = challenge.substring(11);
+		const date = DateTime.fromISO(timestamp);
+		if (date.isValid) {
+			const diff = date.diffNow("hours").hours;
+			if (Math.abs(diff) < 1) {
+				return true;
+			}
+		}
+		return false;
 	}
 	catch (err) {
-		throw new HttpError(401, "Invalid challenge response");
+		return true;
 	}
-
-	if (!challenge.startsWith("clip-share-")) {
-		throw new HttpError(401, "Invalid challenge response");
-	}
-
-	const timestamp = challenge.substring(11);
-	const date = DateTime.fromISO(timestamp);
-	if (date.isValid) {
-		const diff = date.diffNow("hours").hours;
-		if (Math.abs(diff) < 1) {
-			return;
-		}
-	}
-	throw new HttpError(401, "Expired challenge");
 };
