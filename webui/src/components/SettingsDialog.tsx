@@ -29,6 +29,22 @@ function SettingsDialog(props: Props) {
 	const save = () => {
 		let updated = false;
 		if (settings.serverUrl != serverUrl) {
+			if (serverUrl.length > 0) {
+				// Validate serverUrl
+				try {
+					const url = new URL(serverUrl);
+					if (!["ws:", "wss:"].includes(url.protocol))
+						throw new Error();
+				}
+				catch (_err) {
+					dispatch(appActions.addNotification({
+						color: "error",
+						text: "Error: Invalid server URL"
+					}));
+					return;
+				}
+			}
+
 			updated = true;
 			dispatch(settingsActions.update({
 				serverUrl
