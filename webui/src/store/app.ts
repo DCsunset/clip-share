@@ -1,20 +1,30 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceType, Notification } from "../types/app";
-import { DeviceInfo } from "../types/settings";
 import { ListResponse } from "../types/types";
 import { initSettings } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
 
-const initialState = {
-	notifications: [] as Notification[],
+export type AppState = {
+	notifications: Notification[];
 	showDevices: {
-		"paired": true,
-		"new": true
-	},
-	onlineDevices: [] as ListResponse["devices"]
+		paired: boolean,
+		new: boolean
+	};
+	socketStatus: "unavailable" | "disconnected" | "connecting" | "connected";
+	onlineDevices: ListResponse["devices"];
 };
+
+const initialState = {
+	notifications: [],
+	showDevices: {
+		paired: true,
+		new: true
+	},
+	socketStatus: "unavailable",
+	onlineDevices: []
+} as AppState;
 
 const createNotification = (payload: NewNotification) => ({
 	...payload,

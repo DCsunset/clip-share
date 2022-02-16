@@ -10,8 +10,8 @@ import { blue, green, grey } from '@mui/material/colors';
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import './App.css';
-import { WebSocketContext } from './contexts/WebSocketConntext';
-import { useState } from 'react';
+import { useRootDispatch, useRootSelector } from './store/hooks';
+import { useEffect } from 'react';
 
 const theme = createTheme({
   typography: {
@@ -48,28 +48,91 @@ const theme = createTheme({
   }
 });
 
+// function connectToServer(serverUrl: string, dispatch: ReturnType<typeof useRootDispatch>) {
+// 	if (serverUrl.length === 0)
+// 		return null;
+//
+// 	// create a new connection
+// 	const ws = new WebSocket(serverUrl);
+// 	// TODO: handle events
+// 	ws.onerror = event => {
+// 		dispatch(appActions.addNotification({
+// 			color: "error",
+// 			text: `Socket Error: ${event}`
+// 		}));
+// 	};
+// 	
+// 	ws.onmessage = event => {
+// 		try {
+// 			const msg = JSON.parse(event.data);
+// 			// check type
+// 			if (isBaseMessage(msg)) {
+// 				const baseMessage = msg as BaseMessage;
+// 				if (!baseMessage.success) {
+// 					throw new Error(`Error response for ${baseMessage}: ${baseMessage.error}`);
+// 				}
+//
+// 				switch (baseMessage.type) {
+// 					case "list": {
+// 						if (!isListResponse(baseMessage))
+// 							throw new Error(`Invalid message for type ${baseMessage.type}`);
+// 						const listResponse = baseMessage as ListResponse;
+// 						dispatch(appActions.setOnlineDevices(listResponse.devices));
+// 						break;
+// 					}
+// 					case "pair": {
+// 						// TODO
+// 						break;
+// 					}
+// 					case "share": {
+// 						// TODO
+// 						break;
+// 					}
+// 					default:
+// 						throw new Error(`Invalid message type: ${baseMessage.type}`);
+// 				}
+// 			}
+// 			else {
+// 				throw new Error("Invalid message");
+// 			}
+// 		}
+// 		catch (err) {
+// 			dispatch(appActions.addNotification({
+// 				color: "error",
+// 				text: `Socket Error: ${(err as Error).message}`
+// 			}));
+// 		}
+// 	};
+// 		
+// 	return socket;
+// }
+
+
 function App() {
-  // Share ws in all child components
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const dispatch = useRootDispatch();
+  const serverUrl = useRootSelector(state => state.settings.serverUrl);
+
+  // reconnect to server on url change
+  useEffect(() => {
+
+  }, [serverUrl]);
 
   return (
-    <WebSocketContext.Provider value={{ ws, setWs }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Layout>
-          <Container sx={{ px: 1, py: 2 }} >
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6} sx={{ p: 1 }}>
-                <DeviceList type="paired" />
-              </Grid>
-              <Grid item xs={12} md={6} sx={{ p: 1 }}>
-                <DeviceList type="new" />
-              </Grid>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Layout>
+        <Container sx={{ px: 1, py: 2 }} >
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="paired" />
             </Grid>
-          </Container>
-        </Layout>
-      </ThemeProvider>
-    </WebSocketContext.Provider>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="new" />
+            </Grid>
+          </Grid>
+        </Container>
+      </Layout>
+    </ThemeProvider>
   )
 }
 

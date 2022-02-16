@@ -1,41 +1,25 @@
 import { Alert, AppBar, duration, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useContext, useState } from "react";
-import { appActions } from "../store/app";
+import { appActions, AppState } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { Notification } from "../types/app";
 import Logo from "../logo.svg";
 import { mdiCog } from "@mdi/js";
 import Icon from "@mdi/react";
 import SettingsDialog from "./SettingsDialog";
-import { WebSocketContext } from "../contexts/WebSocketConntext";
 
-function getWsStatus(ws: WebSocket | null) {
-	let color = "error.main", text = "Unknown";
-
-	if (ws == null) {
-		color = "gray";
-		text = "Unavailable";
-	}
-	else {
-		switch (ws.readyState) {
-			case ws.CLOSED:
-			case ws.CLOSING:
-				color = "error.main";
-				text = "Disconnected";
-				break;
-			case ws.CONNECTING:
-				color = "info.main";
-				text = "Connecting";
-				break;
-			case ws.OPEN:
-				color = "success.main";
-				text = "Connected";
-				break;
-		}
-	}
+function getStatusColor(status: AppState["socketStatus"]) {
+	const colorMap = {
+		connected: "success.main",
+		connecting: "info.main",
+		disconnected: "error.main",
+		unavailable: "grey",
+	} as {
+		[status in typeof status]: string
+	};
 	
-	return { color, text };
+	return colorMap[status];
 }
 
 interface Props {
@@ -44,10 +28,9 @@ interface Props {
 
 function Layout(props: Props) {
 	const notifications = useRootSelector(state => state.app.notifications);
+	const socketStatus = useRootSelector(state => state.app.socketStatus);
 	const dispatch = useRootDispatch();
 	const [settingsDialog, setSettingsDialog] = useState(false);
-	const { ws } = useContext(WebSocketContext);
-	const wsStatus = getWsStatus(ws);
 
 	// Notifications to be removed
 	const [invalidNotifications, setInvalidNotifications] = useState([] as string[]);
@@ -84,8 +67,8 @@ function Layout(props: Props) {
 
 					<span style={{ flexGrow: 1 }} />
 
-					<Box title={wsStatus.text} sx={{
-						backgroundColor: wsStatus.color,
+					<Box title={socketStatus} sx={{
+						backgroundColor: getStatusColor(socketStatus),
 						width: "12px",
 						height: "12px",
 						borderRadius: "50%",
