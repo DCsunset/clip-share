@@ -56,25 +56,18 @@ function SettingsDialog(props: Props) {
 	const save = () => {
 		let updated = false;
 		if (settings.serverUrl != serverUrl) {
-			if (serverUrl.length > 0) {
-				// Validate serverUrl
-				try {
-					const url = new URL(serverUrl);
-					if (!["ws:", "wss:"].includes(url.protocol))
-						throw new Error();
-				}
-				catch (_err) {
-					dispatch(appActions.addNotification({
-						color: "error",
-						text: "Error: Invalid server URL"
-					}));
-					return;
-				}
-			}
-
 			updated = true;
 			dispatch(settingsActions.update({
 				serverUrl
+			}));
+		}
+		if (deviceInfo.name != deviceName) {
+			updated = true;
+			dispatch(settingsActions.update({
+				deviceInfo: {
+					...deviceInfo,
+					name: deviceName
+				}
 			}));
 		}
 		
@@ -82,12 +75,6 @@ function SettingsDialog(props: Props) {
 			dispatch(appActions.addNotification({
 				color: "success",
 				text: "Settings updated successfully"
-			}));
-		}
-		else {
-			dispatch(appActions.addNotification({
-				color: "info",
-				text: "No changes in settings"
 			}));
 		}
 		props.onClose();
