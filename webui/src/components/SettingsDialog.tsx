@@ -90,8 +90,7 @@ function SettingsDialog(props: Props) {
 					<Grid item>
 						<ListItemText secondary={
 							<span>
-								starting with <code>ws://</code>
-								&nbsp;or <code>wss://</code>
+								Absolute URL or relative path
 							</span>
 						}>
 							Server URL
@@ -100,7 +99,7 @@ function SettingsDialog(props: Props) {
 					<Grid item display="inline-flex" alignItems="center">
 						<TextField
 							variant="standard"
-							placeholder="(Not set)"
+							placeholder="(default: /)"
 							value={serverUrl}
 							onChange={event => setServerUrl(event.target.value)}
 						/>

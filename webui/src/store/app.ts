@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
+import { Socket } from "socket.io-client";
 import { DeviceType, Notification } from "../types/app";
 import { ListResponse } from "../types/types";
 import { initSettings } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
+export type SocketStatus = "disconnected" | "connecting" | "connected";
 
 export type AppState = {
 	notifications: Notification[];
@@ -12,8 +14,8 @@ export type AppState = {
 		paired: boolean,
 		new: boolean
 	};
-	socketStatus: "unavailable" | "disconnected" | "connecting" | "connected";
-	onlineDevices: ListResponse["devices"];
+	socketStatus: SocketStatus;
+	onlineDevices: ListResponse;
 };
 
 const initialState = {
@@ -22,7 +24,7 @@ const initialState = {
 		paired: true,
 		new: true
 	},
-	socketStatus: "unavailable",
+	socketStatus: "disconnected",
 	onlineDevices: []
 } as AppState;
 
@@ -59,8 +61,13 @@ const appSlice = createSlice({
 		}>) {
 			state.showDevices[action.payload.type] = action.payload.value;
 		},
-		setOnlineDevices(state, action: PayloadAction<ListResponse["devices"]>) {
+
+		setOnlineDevices(state, action: PayloadAction<ListResponse>) {
 			state.onlineDevices = action.payload;
+		},
+
+		setSocketStatus(state, action: PayloadAction<SocketStatus>) {
+			state.socketStatus = action.payload;
 		}
 	},
 	extraReducers(builder) {

@@ -10,7 +10,7 @@ export async function generateKeyPairs() {
 	});
 };
 
-export async function generateChallengeResponse(armoredPrivateKey: string) {
+export async function generateChallenge(armoredPrivateKey: string) {
 	const privateKey = await openpgp.readPrivateKey({
 		armoredKey: armoredPrivateKey
 	});

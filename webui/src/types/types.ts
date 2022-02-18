@@ -1,16 +1,4 @@
-/**
- * Payload of the token
- */
-export interface TokenPayload {
-	fingerprint: string;
-}
-
-export class HttpError extends Error {
-	constructor(public statusCode: number, message: string) {
-		super(message);
-		this.statusCode = statusCode;
-	}
-};
+import { Socket } from "socket.io-client";
 
 /**
  * Server config
@@ -18,13 +6,16 @@ export class HttpError extends Error {
  * @see {isConfig} ts-auto-guard:type-guard
  */
 export type Config = {
-	// name of jwt token in cookie
-	jwt: {
-		cookieName: string;
-		// Use to sign token
-		secret: string;
-		maxAgeInDays: number;
-	}
+	bufferSize: {
+		clipboard: number,
+		notification: number
+	}	
+};
+
+export type DeviceInfo = {
+	name: string;
+	// socket.io connection
+	socket: Socket;
 };
 
 /* Data type shared between devices
@@ -40,42 +31,22 @@ export type DataType = "clipboard" | "notification";
 export type DataBuffer = {
 	[type in DataType]: {
 		from: string;
-		data: string;
+		content: string;
 	}[];
 };
 
 /**
- * Requst to create a session (log in)
+ * Auth request to initialize a connection
  * 
- * @see {isSessionRequest} ts-auto-guard:type-guard
+ * @see {isAuthRequest} ts-auto-guard:type-guard
  */
-export type SessionRequest = {
+export type AuthRequest = {
 	// OpenPGP armored public key (userID not used)
 	publicKey: string;
-	// Sign the challenge string (OpenPGP message format)
-	challengeResponse: string;
-	// Use cookie or return the token directly
-	cookie?: boolean;
-};
-
-
-/**
- * Message Type for communication
- * (handle multiple requests at the same time)
- * 
- * @see {isMessageType} ts-auto-guard:type-guard
- */
-export type MessageType = "pair" | "list" | "share" | "error";
-
-/**
- * BaseMessage used in WebSocket communication
- * 
- * @see {isBaseMessage} ts-auto-guard:type-guard
- */
-export interface BaseMessage {
-	type: MessageType;
-	success: boolean;
-	error?: string;
+	// signed challenge string (OpenPGP message format)
+	challenge: string;
+	// name of the device
+	name: string;
 };
 
 /**
@@ -83,22 +54,20 @@ export interface BaseMessage {
  * 
  * @see {isListResponse} ts-auto-guard:type-guard
  */
-export interface ListResponse extends BaseMessage {
-	devices: {
-		name: string,
-		fingerprint: string
-	}[];
-};
+export type ListResponse = {
+	id: string,
+	name: string
+}[];
 
 /**
- * Message to pair a specific device
- * (request and reponse share the same type)
+ * Event to pair a specific device
+ * (request and response share the same type)
  * 
- * @see {isPairMessage} ts-auto-guard:type-guard
+ * @see {isPairEvent} ts-auto-guard:type-guard
  */
-export interface PairMessage extends BaseMessage {
+export interface PairEvent {
 	/// the device to pair (fingerprint)
-	device: string;
+	deviceId: string;
 	/// device name
 	name: string;
 	/// sender's public key for e2ee
@@ -106,24 +75,17 @@ export interface PairMessage extends BaseMessage {
 };
 
 /**
- * Request to share message
- * (request and reponse share the same type)
+ * Event to share data
+ * (request and response share the same type)
  * 
- * @see {isShareMessage} ts-auto-guard:type-guard
+ * @see {isShareEvent} ts-auto-guard:type-guard
  */
-export interface ShareMessage extends BaseMessage {
-	/// the device to share (fingerprint)
-	device: string;
+export interface ShareEvent {
+	/// the device to share from or to
+	deviceId: string;
 	/// e2e encrypted message
-	message: {
+	data: {
 		type: DataType;
-		data: string;
-	}
-}
-
-export class WebSocketError extends Error {
-	constructor(public type: MessageType, message: string) {
-		super(message);
-		this.type = type;
+		content: string;
 	}
 };
