@@ -76,13 +76,13 @@ io.on("connection", async socket => {
 
 		connectionMap.set(socket.id, deviceId);
 		onlineDevices.set(deviceId, { name, socket });
-		console.log(`Device ${name} (${deviceId}) connects`);
+		console.log(`Device ${name} (${deviceId.substring(0, 17)}) connects`);
 		
 		// Disconnection
 		socket.on("disconnect", () => {
 			connectionMap.delete(socket.id);
 			onlineDevices.delete(deviceId);
-			console.log(`Device ${name} (${deviceId}) disconnects`);
+			console.log(`Device ${name} (${deviceId.substring(0, 17)}) disconnects`);
 		});
 
 		// send buffered data
