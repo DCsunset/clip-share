@@ -118,6 +118,7 @@ function App() {
 
   // reconnect to server on url change
   useEffect(() => {
+    console.log("[socket] Connecting");
     let socket: Socket | null = null;
     const connectToServer = async () => {
       const challenge = await generateChallenge(deviceInfo.privateKey);
@@ -134,7 +135,7 @@ function App() {
         : io(socketOptions);
         
       socket.on("connect", () => {
-        console.log("Connected to server");
+        console.log("[socket] Connected to server");
         dispatch(appActions.setSocketStatus("connected"));
       });
       
@@ -146,7 +147,7 @@ function App() {
       });
       
       socket.on("disconnect", () => {
-        console.log("Disconnected from server");
+        console.log("[socket] Disconnected from server");
         dispatch(appActions.setSocketStatus("disconnected"));
         socket = null;
       });
@@ -165,7 +166,7 @@ function App() {
         socket.disconnect();
       }
     };
-  }, [serverUrl, deviceInfo, dispatch]);
+  }, [serverUrl, deviceInfo]);
 
   return (
     <ThemeProvider theme={theme}>

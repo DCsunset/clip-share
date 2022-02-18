@@ -1,6 +1,6 @@
 import { Alert, AppBar, duration, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { appActions, AppState } from "../store/app";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { Notification } from "../types/app";

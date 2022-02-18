@@ -1,4 +1,4 @@
-import { mdiCog, mdiServerPlus } from "@mdi/js";
+import { mdiCog, mdiRefresh } from "@mdi/js";
 import Icon from "@mdi/react";
 import {
 	Box,
@@ -8,13 +8,16 @@ import {
 	DialogContent,
 	DialogTitle,
 	Grid,
+	IconButton,
 	ListItemText,
 	TextField
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useEffect, useState } from "react";
 import { appActions } from "../store/app";
+import { genKeyPairs } from "../store/async-actions";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { settingsActions } from "../store/settings";
+import { getFingerprint } from "../utils/crypto";
 
 interface Props {
 	open: boolean;
@@ -23,8 +26,32 @@ interface Props {
 
 function SettingsDialog(props: Props) {
 	const settings = useRootSelector(state => state.settings);
+	const deviceInfo = useRootSelector(state => state.settings.deviceInfo);
 	const dispatch = useRootDispatch();
 	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
+	const [deviceName, setDeviceName] = useState(deviceInfo.name);
+	const [fingerprint, setFingerprint] = useState("");
+	
+	useEffect(() => {
+		// Generate key pairs if empty
+		if (deviceInfo.publicKey.length === 0)
+			dispatch(genKeyPairs());
+	}, [deviceInfo]);
+	
+	// Calculate fingerprint
+	useEffect(() => {
+		setFingerprint("calculating...");
+		// Display only first 6 bytes
+		getFingerprint(deviceInfo.publicKey)
+			.then(v => setFingerprint(v.substring(0, 17)))
+			.catch(err => {
+        dispatch(appActions.addNotification({
+          color: "error",
+          text: `Error: ${err.message}`
+        }));
+				setFingerprint("error");
+			});
+	}, [deviceInfo]);
 
 	const save = () => {
 		let updated = false;
@@ -68,6 +95,7 @@ function SettingsDialog(props: Props) {
 	
 	const reset = () => {
 		setServerUrl(settings.serverUrl);
+		setDeviceName(deviceInfo.name);
 	};
 
 	return (
@@ -88,11 +116,7 @@ function SettingsDialog(props: Props) {
 			<DialogContent>
 				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
-						<ListItemText secondary={
-							<span>
-								Absolute URL or relative path
-							</span>
-						}>
+						<ListItemText secondary="Absolute URL or relative path">
 							Server URL
 						</ListItemText>
 					</Grid>
@@ -103,6 +127,42 @@ function SettingsDialog(props: Props) {
 							value={serverUrl}
 							onChange={event => setServerUrl(event.target.value)}
 						/>
+					</Grid>
+				</Grid>
+
+				{/* Device Info */}
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Name for current device">
+							Device Name
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<TextField
+							variant="standard"
+							required
+							value={deviceName}
+							onChange={event => setDeviceName(event.target.value)}
+						/>
+					</Grid>
+				</Grid>
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Fingerprint for current key pairs">
+							Key Fingerprint
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<span>{fingerprint}</span>
+						<IconButton
+							title="Re-generate"
+							color="secondary"
+							size="small"
+							onClick={() => dispatch(genKeyPairs())}
+							sx={{ ml: 1.5 }}
+						>
+							<Icon path={mdiRefresh} size={1} />
+						</IconButton>
 					</Grid>
 				</Grid>
 			</DialogContent>

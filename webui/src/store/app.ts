@@ -1,9 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
-import { Socket } from "socket.io-client";
 import { DeviceType, Notification } from "../types/app";
 import { ListResponse } from "../types/types";
-import { initSettings } from "./async-actions";
+import { genKeyPairs } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
 export type SocketStatus = "disconnected" | "connecting" | "connected";
@@ -72,7 +71,7 @@ const appSlice = createSlice({
 	},
 	extraReducers(builder) {
 		// initSettings
-		builder.addCase(initSettings.rejected, handleError);
+		builder.addCase(genKeyPairs.rejected, handleError);
 	}
 });
 

@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceInfo } from "../types/settings";
-import { initSettings } from "./async-actions";
+import { genKeyPairs } from "./async-actions";
 
 export type SettingsState = {
 	deviceInfo: Required<DeviceInfo>;
@@ -19,9 +19,9 @@ function loadState() {
 
 // Initialize when no persistent state
 const initialState: SettingsState = loadState() || {
-	// keys should be initialized by calling initSettings()
+	// keys should be initialized by calling genKeyPairs()
 	deviceInfo: {
-		name: "",
+		name: "Unnamed",
 		privateKey: "",
 		publicKey: ""
 	},
@@ -51,7 +51,7 @@ const settingsSlice = createSlice({
 	},
 	extraReducers(builder) {
 		// initSettings
-		builder.addCase(initSettings.fulfilled, (state, action) => {
+		builder.addCase(genKeyPairs.fulfilled, (state, action) => {
 			const { publicKey, privateKey } = action.payload;
 			Object.assign(state.deviceInfo, { publicKey, privateKey });
 		});

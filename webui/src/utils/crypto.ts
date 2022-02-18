@@ -10,6 +10,17 @@ export async function generateKeyPairs() {
 	});
 };
 
+export async function getFingerprint(armoredPublicKey: string) {
+	const publicKey = await openpgp.readKey({
+		armoredKey: armoredPublicKey
+	});
+	// fingerprint is human-readable format
+	return publicKey.getFingerprint()
+		.match(/.{1,2}/g)!
+		.slice(0, 6)
+		.join(":");
+};
+
 export async function generateChallenge(armoredPrivateKey: string) {
 	const privateKey = await openpgp.readPrivateKey({
 		armoredKey: armoredPrivateKey
