@@ -1,4 +1,4 @@
-import openpgp from "openpgp";
+import * as openpgp from "openpgp";
 import { DateTime } from "luxon";
 
 export async function getFingerprint(armoredPublicKey: string) {
