@@ -6,7 +6,7 @@ import {
   ThemeProvider
 } from '@mui/material'
 import { useEffect } from 'react';
-import { io, Socket, SocketOptions } from "socket.io-client";
+import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import { blue, green, grey } from '@mui/material/colors';
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
@@ -122,7 +122,8 @@ function App() {
     let socket: Socket | null = null;
     const connectToServer = async () => {
       const challenge = await generateChallenge(deviceInfo.privateKey);
-      const socketOptions: SocketOptions = {
+      const socketOptions: Partial<ManagerOptions & SocketOptions> = {
+        transports: ["websocket"],
         auth: {
           challenge,
           name: deviceInfo.name,
@@ -140,21 +141,27 @@ function App() {
       });
       
       socket.on("connect_error", () => {
-        dispatch(appActions.addNotification({
-          color: "error",
-          text: "Error: fail to connect to server"
-        }));
+        console.log("[socket] Fail to connect to server");
+        socket = null;
       });
       
-      socket.on("disconnect", () => {
-        console.log("[socket] Disconnected from server");
+      socket.on("disconnect", reason => {
+        console.log(`[socket] Disconnected from server: ${reason}`);
         dispatch(appActions.setSocketStatus("disconnected"));
         socket = null;
+      });
+      
+      socket.on("error", error => {
+        dispatch(appActions.addNotification({
+          color: "error",
+          text: `Socket Error: ${error}`
+        }));
       });
     }
     
     connectToServer()
       .catch(err => {
+        socket = null;
         dispatch(appActions.addNotification({
           color: "error",
           text: `Error: ${err.message}`
