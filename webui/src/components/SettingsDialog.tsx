@@ -32,7 +32,7 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
 	const [deviceName, setDeviceName] = useState(deviceInfo.name);
 	const [fingerprint, setFingerprint] = useState("");
-	const [reconnectionMaxDelay, setReconnectionMaxDelay] = useState(settings.reconnectionMaxDelay.toString());
+	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(settings.reconnectionDelayMax.toString());
 	const [fetchingInterval, setFetchingInterval] = useState(settings.fetchingInterval.toString());
 
 	const validNumber = (s: string) => {
@@ -41,10 +41,10 @@ function SettingsDialog(props: Props) {
 	};
 
 	const validName = () => deviceName.length > 0;
-	const validReconnectionMaxDelay = () => validNumber(reconnectionMaxDelay);
+	const validReconnectionDelayMax = () => validNumber(reconnectionDelayMax);
 	const validFetchingInterval = () => validNumber(fetchingInterval);
 	const validSettings = () => validName()
-		&& validReconnectionMaxDelay()
+		&& validReconnectionDelayMax()
 		&& validFetchingInterval();
 
 	useEffect(() => {
@@ -101,7 +101,7 @@ function SettingsDialog(props: Props) {
 	const reset = () => {
 		setServerUrl(settings.serverUrl);
 		setDeviceName(deviceInfo.name);
-		setReconnectionMaxDelay(settings.reconnectionMaxDelay.toString());
+		setReconnectionDelayMax(settings.reconnectionDelayMax.toString());
 		setFetchingInterval(settings.fetchingInterval.toString());
 	};
 	
@@ -188,18 +188,18 @@ function SettingsDialog(props: Props) {
 				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
 						<ListItemText secondary="Max delay for reconnection (in ms)">
-							Reconnection Max Delay
+							Reconnection Delay Max
 						</ListItemText>
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">
 						<TextField
-							error={!validReconnectionMaxDelay()}
+							error={!validReconnectionDelayMax()}
 							variant="standard"
 							style={{
 								maxWidth: "85px"
 							}}
-							value={reconnectionMaxDelay}
-							onChange={event => setReconnectionMaxDelay(event.target.value)}
+							value={reconnectionDelayMax}
+							onChange={event => setReconnectionDelayMax(event.target.value)}
 							{...requiredProps}
 						/>
 					</Grid>
