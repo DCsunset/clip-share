@@ -12,6 +12,7 @@ import {
 	ListItemText,
 	TextField
 } from "@mui/material";
+import { red } from "@mui/material/colors";
 import { useEffect, useState } from "react";
 import { appActions } from "../store/app";
 import { genKeyPairs } from "../store/async-actions";
@@ -31,7 +32,9 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
 	const [deviceName, setDeviceName] = useState(deviceInfo.name);
 	const [fingerprint, setFingerprint] = useState("");
-	
+	const validName = () => deviceName.length > 0;
+	const validSettings = () => validName();
+
 	useEffect(() => {
 		// Generate key pairs if empty
 		if (deviceInfo.publicKey.length === 0)
@@ -54,6 +57,9 @@ function SettingsDialog(props: Props) {
 	}, [deviceInfo]);
 
 	const save = () => {
+		if (!validSettings())
+			return;
+
 		let updated = false;
 		if (settings.serverUrl != serverUrl) {
 			updated = true;
@@ -126,8 +132,15 @@ function SettingsDialog(props: Props) {
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">
 						<TextField
+							error={!validName()}
 							variant="standard"
-							required
+							placeholder="Required *"
+							sx={{
+								"& input::placeholder": {
+									color: "error.main",
+									opacity: 1
+								}
+							}}
 							value={deviceName}
 							onChange={event => setDeviceName(event.target.value)}
 						/>
