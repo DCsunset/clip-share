@@ -109,7 +109,8 @@ io.on("connection", async socket => {
 				.map(([id, info]) => ({
 					id,
 					name: info.name,
-				}));
+				}))
+				.filter(({ id }) => id !== deviceId);
 			const listResponse: ListResponse = devices;
 			socket.emit("list", listResponse);
 		});
