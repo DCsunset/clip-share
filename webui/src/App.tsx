@@ -5,7 +5,7 @@ import {
   Grid,
   ThemeProvider
 } from '@mui/material'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import { blue, green, grey } from '@mui/material/colors';
 import DeviceList from './components/DeviceList';
@@ -114,15 +114,19 @@ const theme = createTheme({
 function App() {
   const dispatch = useRootDispatch();
   const serverUrl = useRootSelector(state => state.settings.serverUrl);
+  const fetchingInterval = useRootSelector(state => state.settings.fetchingInterval);
+  const reconnectionDelayMax = useRootSelector(state => state.settings.reconnectionDelayMax);
   const deviceInfo = useRootSelector(state => state.settings.deviceInfo);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   // reconnect to server on url change
   useEffect(() => {
     console.log("[socket] Connecting");
-    let socket: Socket | null = null;
     const connectToServer = async () => {
+      let socket: Socket | null = null;
       const challenge = await generateChallenge(deviceInfo.privateKey);
       const socketOptions: Partial<ManagerOptions & SocketOptions> = {
+        reconnectionDelayMax,
         transports: ["websocket"],
         auth: {
           challenge,
@@ -157,11 +161,18 @@ function App() {
           text: `Socket Error: ${error}`
         }));
       });
+      
+      socket.on("list", data => {
+        dispatch(appActions.setOnlineDevices(data));
+      });
+
+      return socket;
     }
     
     connectToServer()
+      .then(setSocket)
       .catch(err => {
-        socket = null;
+        setSocket(null);
         dispatch(appActions.addNotification({
           color: "error",
           text: `Error: ${err.message}`
@@ -173,7 +184,18 @@ function App() {
         socket.disconnect();
       }
     };
-  }, [serverUrl, deviceInfo]);
+  }, [serverUrl, deviceInfo, reconnectionDelayMax]);
+  
+  // Fetching device list
+  useEffect(() => {
+    if (socket === null)
+      return;
+    
+    const id = setInterval(() => {
+      socket.emit("list");
+    }, fetchingInterval);
+    return () => clearInterval(id);
+  }, [socket, fetchingInterval]);
 
   return (
     <ThemeProvider theme={theme}>
