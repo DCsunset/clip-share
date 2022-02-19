@@ -7,6 +7,10 @@ export type SettingsState = {
 	deviceInfo: Required<DeviceInfo>;
 	pairedDevices: DeviceInfo[];
 	serverUrl: string;
+	// reconnection config for socket.io
+	reconnectionMaxDelay: number,
+	// interval for fetching device list
+	fetchingInterval: number,
 	lastModified: number;
 };
 
@@ -18,7 +22,7 @@ function loadState() {
 }
 
 // Initialize when no persistent state
-const initialState: SettingsState = loadState() || {
+const initialState: SettingsState = {
 	// keys should be initialized by calling genKeyPairs()
 	deviceInfo: {
 		name: "Unnamed",
@@ -27,8 +31,14 @@ const initialState: SettingsState = loadState() || {
 	},
 	pairedDevices: [],
 	serverUrl: "",
+	reconnectionMaxDelay: 5000,
+	fetchingInterval: 3000,
 	// timestamp
-	lastModified: new Date().getTime()
+	lastModified: new Date().getTime(),
+
+	// Use loaded state to overwrite default ones
+	// useful for introducing new settings without breaking
+	...loadState()
 } as SettingsState;
 
 const settingsSlice = createSlice({

@@ -10,9 +10,9 @@ import {
 	Grid,
 	IconButton,
 	ListItemText,
-	TextField
+	TextField,
+	TextFieldProps
 } from "@mui/material";
-import { red } from "@mui/material/colors";
 import { useEffect, useState } from "react";
 import { appActions } from "../store/app";
 import { genKeyPairs } from "../store/async-actions";
@@ -32,8 +32,20 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
 	const [deviceName, setDeviceName] = useState(deviceInfo.name);
 	const [fingerprint, setFingerprint] = useState("");
+	const [reconnectionMaxDelay, setReconnectionMaxDelay] = useState(settings.reconnectionMaxDelay.toString());
+	const [fetchingInterval, setFetchingInterval] = useState(settings.fetchingInterval.toString());
+
+	const validNumber = (s: string) => {
+		const num = parseInt(s);
+		return num > 0 && num.toString() === s;
+	};
+
 	const validName = () => deviceName.length > 0;
-	const validSettings = () => validName();
+	const validReconnectionMaxDelay = () => validNumber(reconnectionMaxDelay);
+	const validFetchingInterval = () => validNumber(fetchingInterval);
+	const validSettings = () => validName()
+		&& validReconnectionMaxDelay()
+		&& validFetchingInterval();
 
 	useEffect(() => {
 		// Generate key pairs if empty
@@ -89,6 +101,19 @@ function SettingsDialog(props: Props) {
 	const reset = () => {
 		setServerUrl(settings.serverUrl);
 		setDeviceName(deviceInfo.name);
+		setReconnectionMaxDelay(settings.reconnectionMaxDelay.toString());
+		setFetchingInterval(settings.fetchingInterval.toString());
+	};
+	
+	// styles for required fields
+	const requiredProps: TextFieldProps = {
+		placeholder: "Required *",
+		sx: {
+			"& input::placeholder": {
+				color: "error.main",
+				opacity: 1
+			}
+		}
 	};
 
 	return (
@@ -134,15 +159,9 @@ function SettingsDialog(props: Props) {
 						<TextField
 							error={!validName()}
 							variant="standard"
-							placeholder="Required *"
-							sx={{
-								"& input::placeholder": {
-									color: "error.main",
-									opacity: 1
-								}
-							}}
 							value={deviceName}
 							onChange={event => setDeviceName(event.target.value)}
+							{...requiredProps}
 						/>
 					</Grid>
 				</Grid>
@@ -163,6 +182,45 @@ function SettingsDialog(props: Props) {
 						>
 							<Icon path={mdiRefresh} size={1} />
 						</IconButton>
+					</Grid>
+				</Grid>
+
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Max delay for reconnection (in ms)">
+							Reconnection Max Delay
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<TextField
+							error={!validReconnectionMaxDelay()}
+							variant="standard"
+							style={{
+								maxWidth: "85px"
+							}}
+							value={reconnectionMaxDelay}
+							onChange={event => setReconnectionMaxDelay(event.target.value)}
+							{...requiredProps}
+						/>
+					</Grid>
+				</Grid>
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Interval for fetching device list (in ms)">
+							Fetching Interval
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<TextField
+							error={!validFetchingInterval()}
+							variant="standard"
+							style={{
+								maxWidth: "85px"
+							}}
+							value={fetchingInterval}
+							onChange={event => setFetchingInterval(event.target.value)}
+							{...requiredProps}
+						/>
 					</Grid>
 				</Grid>
 			</DialogContent>
