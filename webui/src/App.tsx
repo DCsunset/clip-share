@@ -15,6 +15,7 @@ import { useRootDispatch, useRootSelector } from './store/hooks';
 import { generateChallenge } from './utils/crypto';
 import { AuthRequest } from './types/types';
 import { appActions } from './store/app';
+import { selectNewDevices } from './store/selectors';
 
 const theme = createTheme({
   typography: {
@@ -51,72 +52,14 @@ const theme = createTheme({
   }
 });
 
-// function connectToServer(serverUrl: string, dispatch: ReturnType<typeof useRootDispatch>) {
-// 	if (serverUrl.length === 0)
-// 		return null;
-//
-// 	// create a new connection
-// 	const ws = new WebSocket(serverUrl);
-// 	// TODO: handle events
-// 	ws.onerror = event => {
-// 		dispatch(appActions.addNotification({
-// 			color: "error",
-// 			text: `Socket Error: ${event}`
-// 		}));
-// 	};
-// 	
-// 	ws.onmessage = event => {
-// 		try {
-// 			const msg = JSON.parse(event.data);
-// 			// check type
-// 			if (isBaseMessage(msg)) {
-// 				const baseMessage = msg as BaseMessage;
-// 				if (!baseMessage.success) {
-// 					throw new Error(`Error response for ${baseMessage}: ${baseMessage.error}`);
-// 				}
-//
-// 				switch (baseMessage.type) {
-// 					case "list": {
-// 						if (!isListResponse(baseMessage))
-// 							throw new Error(`Invalid message for type ${baseMessage.type}`);
-// 						const listResponse = baseMessage as ListResponse;
-// 						dispatch(appActions.setOnlineDevices(listResponse.devices));
-// 						break;
-// 					}
-// 					case "pair": {
-// 						// TODO
-// 						break;
-// 					}
-// 					case "share": {
-// 						// TODO
-// 						break;
-// 					}
-// 					default:
-// 						throw new Error(`Invalid message type: ${baseMessage.type}`);
-// 				}
-// 			}
-// 			else {
-// 				throw new Error("Invalid message");
-// 			}
-// 		}
-// 		catch (err) {
-// 			dispatch(appActions.addNotification({
-// 				color: "error",
-// 				text: `Socket Error: ${(err as Error).message}`
-// 			}));
-// 		}
-// 	};
-// 		
-// 	return socket;
-// }
-
-
 function App() {
   const dispatch = useRootDispatch();
   const serverUrl = useRootSelector(state => state.settings.serverUrl);
   const fetchingInterval = useRootSelector(state => state.settings.fetchingInterval);
   const reconnectionDelayMax = useRootSelector(state => state.settings.reconnectionDelayMax);
   const deviceInfo = useRootSelector(state => state.settings.deviceInfo);
+  const newDevices = useRootSelector(selectNewDevices);
+  const pairedDevices = useRootSelector(state => state.settings.pairedDevices);
   const [socket, setSocket] = useState<Socket | null>(null);
 
   // reconnect to server on url change
@@ -204,10 +147,10 @@ function App() {
         <Container sx={{ px: 1, py: 2 }} >
           <Grid container spacing={2}>
             <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="paired" />
+              <DeviceList type="paired" devices={pairedDevices} />
             </Grid>
             <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="new" />
+              <DeviceList type="new" devices={newDevices} />
             </Grid>
           </Grid>
         </Container>

@@ -4,14 +4,17 @@ import {
 	Card,
   CardContent,
   IconButton,
+  List,
+  ListItem,
   Typography
 } from '@mui/material';
 import {
-	mdiChevronDown, mdiLaptop, mdiLinkVariant
+	mdiChevronDown, mdiLaptop, mdiLinkVariant, mdiPlus
 } from "@mdi/js";
 import { useRootDispatch, useRootSelector } from '../store/hooks';
 import { DeviceType } from '../types/app';
 import { appActions } from '../store/app';
+import { ListResponse } from '../types/types';
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
@@ -19,6 +22,7 @@ function capitalize(str: string) {
 
 type Props = {
 	type: DeviceType
+	devices: ListResponse
 };
 
 function DeviceList(props: Props) {
@@ -72,6 +76,31 @@ function DeviceList(props: Props) {
 					</IconButton>
 				</Box>
 				<hr />
+				
+				<List sx={{
+					py: 0,
+					display: showDevices ? undefined : "none",
+					transition: "all 0.2s"
+				}}>
+					{props.devices.map(device => (
+						<ListItem
+							key={device.id}
+							sx={{ px: 1 }}
+						>
+							<span>{device.name}</span>
+							<Box sx={{
+								opacity: 0.75,
+								ml: 1
+							}}>
+								({device.id.substring(0, 17)})
+							</Box>
+							<span style={{ flexGrow: 1 }} />
+							<IconButton size="small" title="Pair">
+								<Icon path={mdiPlus} size={1} />
+							</IconButton>
+						</ListItem>
+					))}
+				</List>
 			</CardContent>
 		</Card>
 	)
