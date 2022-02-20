@@ -25,6 +25,7 @@ function loadState() {
 const initialState: SettingsState = {
 	// keys should be initialized by calling genKeyPairs()
 	deviceInfo: {
+		id: "",
 		name: "Unnamed",
 		privateKey: "",
 		publicKey: ""
@@ -62,8 +63,13 @@ const settingsSlice = createSlice({
 	extraReducers(builder) {
 		// initSettings
 		builder.addCase(genKeyPairs.fulfilled, (state, action) => {
-			const { publicKey, privateKey } = action.payload;
-			Object.assign(state.deviceInfo, { publicKey, privateKey });
+			const { publicKey, privateKey, fingerprint } = action.payload;
+			Object.assign(state.deviceInfo, {
+				id: fingerprint,
+				publicKey,
+				privateKey
+			});
+			state.lastModified = new Date().getTime();
 		});
 	}
 });

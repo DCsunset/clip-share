@@ -18,7 +18,6 @@ import { appActions } from "../store/app";
 import { genKeyPairs } from "../store/async-actions";
 import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { settingsActions } from "../store/settings";
-import { getFingerprint } from "../utils/crypto";
 
 interface Props {
 	open: boolean;
@@ -31,7 +30,6 @@ function SettingsDialog(props: Props) {
 	const dispatch = useRootDispatch();
 	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
 	const [deviceName, setDeviceName] = useState(deviceInfo.name);
-	const [fingerprint, setFingerprint] = useState("");
 	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(settings.reconnectionDelayMax.toString());
 	const [fetchingInterval, setFetchingInterval] = useState(settings.fetchingInterval.toString());
 
@@ -53,21 +51,6 @@ function SettingsDialog(props: Props) {
 			dispatch(genKeyPairs());
 	}, [deviceInfo]);
 	
-	// Calculate fingerprint
-	useEffect(() => {
-		setFingerprint("calculating...");
-		// Display only first 6 bytes
-		getFingerprint(deviceInfo.publicKey)
-			.then(v => setFingerprint(v.substring(0, 17)))
-			.catch(err => {
-        dispatch(appActions.addNotification({
-          color: "error",
-          text: `Error: ${err.message}`
-        }));
-				setFingerprint("error");
-			});
-	}, [deviceInfo]);
-
 	const save = () => {
 		if (!validSettings())
 			return;
@@ -172,7 +155,7 @@ function SettingsDialog(props: Props) {
 						</ListItemText>
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">
-						<span>{fingerprint}</span>
+						<span>{deviceInfo.id}</span>
 						<IconButton
 							title="Re-generate"
 							color="secondary"
