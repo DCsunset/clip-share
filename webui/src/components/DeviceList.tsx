@@ -3,6 +3,7 @@ import {
 	Box,
 	Card,
   CardContent,
+  Collapse,
   IconButton,
   List,
   ListItem,
@@ -33,7 +34,9 @@ function DeviceList(props: Props) {
 
 	return (
 		<Card>
-			<CardContent>
+			<CardContent sx={{
+				"&:last-child": { pb: 2 }
+			}}>
 				<Box sx={{
 					display: "flex"
 				}}>
@@ -77,30 +80,28 @@ function DeviceList(props: Props) {
 				</Box>
 				<hr />
 				
-				<List sx={{
-					py: 0,
-					display: showDevices ? undefined : "none",
-					transition: "all 0.2s"
-				}}>
-					{props.devices.map(device => (
-						<ListItem
-							key={device.id}
-							sx={{ px: 1 }}
-						>
-							<span>{device.name}</span>
-							<Box sx={{
-								opacity: 0.75,
-								ml: 1
-							}}>
-								({device.id.substring(0, 17)})
-							</Box>
-							<span style={{ flexGrow: 1 }} />
-							<IconButton size="small" title="Pair">
-								<Icon path={mdiPlus} size={1} />
-							</IconButton>
-						</ListItem>
-					))}
-				</List>
+				<Collapse in={showDevices}>
+					<List sx={{ py: 0 }}>
+						{props.devices.map(device => (
+							<ListItem
+								key={device.id}
+								sx={{ px: 1 }}
+							>
+								<span>{device.name}</span>
+								<Box sx={{
+									opacity: 0.75,
+									ml: 1
+								}}>
+									({device.id.substring(0, 17)})
+								</Box>
+								<span style={{ flexGrow: 1 }} />
+								<IconButton size="small" title="Pair">
+									<Icon path={mdiPlus} size={1} />
+								</IconButton>
+							</ListItem>
+						))}
+					</List>
+				</Collapse>
 			</CardContent>
 		</Card>
 	)
