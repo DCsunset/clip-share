@@ -3,7 +3,7 @@ import {
 	AuthRequest,
 	DataBuffer,
 	DataType,
-	DeviceInfo,
+	DeviceState,
 	ListResponse,
 	PairEvent,
 	ShareEvent,
@@ -41,7 +41,7 @@ function addToBuffer(fromDevice: string, toDevice: string, data: ShareEvent["dat
 
 
 // Map device id to device info
-const onlineDevices = new Map<string, DeviceInfo>();
+const onlineDevices = new Map<string, DeviceState>();
 // Map connections to device id
 const connectionMap = new Map<string, string>();
 
@@ -75,7 +75,10 @@ io.on("connection", async socket => {
 		}
 
 		connectionMap.set(socket.id, deviceId);
-		onlineDevices.set(deviceId, { name, socket });
+		onlineDevices.set(deviceId, {
+			name,
+			socketId: socket.id
+		});
 		console.log(`Device ${name} (${deviceId.substring(0, 17)}) connects`);
 		
 		// Disconnection
@@ -137,7 +140,7 @@ io.on("connection", async socket => {
 			}
 
 			// Send sender's info to receiver
-			otherDevice.socket.emit("pair", {
+			io.to(otherDevice.socketId).emit("pair", {
 				deviceId,
 				name,
 				publicKey: pairEvent.publicKey,
@@ -158,7 +161,7 @@ io.on("connection", async socket => {
 				// Info of the other devices
 				const otherDevice = onlineDevices.get(shareEvent.deviceId)!;
 				// Send sender's info to receiver
-				otherDevice.socket.emit("share", {
+				io.to(otherDevice.socketId).emit("share", {
 					...shareEvent,
 					deviceId
 				} as ShareEvent);
