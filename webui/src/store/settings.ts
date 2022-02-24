@@ -8,9 +8,9 @@ export type SettingsState = {
 	pairedDevices: DeviceInfo[];
 	serverUrl: string;
 	// reconnection config for socket.io
-	reconnectionDelayMax: number,
+	reconnectionDelayMax: number;
 	// interval for fetching device list
-	fetchingInterval: number,
+	fetchingInterval: number;
 	lastModified: number;
 };
 
@@ -31,6 +31,7 @@ const initialState: SettingsState = {
 		publicKey: ""
 	},
 	pairedDevices: [],
+	pairingDevices: [],
 	serverUrl: "",
 	reconnectionDelayMax: 5000,
 	fetchingInterval: 3000,
