@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "type-guard": "ts-auto-guard src/types/types.ts"
+    "type": "cp ../server/src/types*.ts ./src/types/"
   },
   "dependencies": {
     "@emotion/react": "^11.7.1",

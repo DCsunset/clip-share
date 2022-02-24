@@ -1,5 +1,3 @@
-import { Socket } from "socket.io-client";
-
 /**
  * Server config
  * 
@@ -12,10 +10,10 @@ export type Config = {
 	}	
 };
 
-export type DeviceInfo = {
+export type DeviceState = {
 	name: string;
 	// socket.io connection
-	socket: Socket;
+	socketId: string;
 };
 
 /* Data type shared between devices
