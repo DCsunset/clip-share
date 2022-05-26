@@ -69,7 +69,7 @@ export interface PairEvent {
 	/// device name
 	name: string;
 	/// sender's public key for e2ee
-	publicKey?: string;
+	publicKey: string;
 };
 
 /**

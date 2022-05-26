@@ -48,8 +48,7 @@ export function isPairEvent(obj: any, _argumentName?: string): obj is PairEvent 
             typeof obj === "function") &&
         typeof obj.deviceId === "string" &&
         typeof obj.name === "string" &&
-        (typeof obj.publicKey === "undefined" ||
-            typeof obj.publicKey === "string")
+        typeof obj.publicKey === "string"
     )
 }
 
