@@ -1,4 +1,4 @@
-import { ListResponse, PairEvent } from "../types/types";
+import { ListResponse, PairEvent } from "./server";
 
 export type Device = PairEvent;
 export type DeviceList = ListResponse;
