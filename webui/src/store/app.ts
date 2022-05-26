@@ -1,15 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import _ from "lodash";
 import { DeviceType, Notification } from "../types/app";
-import { ListResponse, PairEvent } from "../types/types";
+import { Device, DeviceList, OutgoingRequest } from "../types/states";
 import { genKeyPairs } from "./async-actions";
 
 export type NewNotification = Omit<Notification, "id">;
 export type SocketStatus = "disconnected" | "connecting" | "connected";
-export type PairingDevice = {
-	deviceId: string;
-	timeout: number;
-};
 
 export type AppState = {
 	notifications: Notification[];
@@ -18,10 +14,9 @@ export type AppState = {
 		new: boolean
 	};
 	socketStatus: SocketStatus;
-	onlineDevices: ListResponse;
-	// waiting for response
-	pairingDevices: PairingDevice[];
-	receivedPairEvents: PairEvent[];
+	onlineDevices: DeviceList;
+	outgoingRequests: OutgoingRequest[];
+	incomingRequests: Device[];
 };
 
 const initialState = {
@@ -32,8 +27,8 @@ const initialState = {
 	},
 	socketStatus: "disconnected",
 	onlineDevices: [],
-	pairingDevices: [],
-	receivedPairEvents: []
+	outgoingRequests: [],
+	incomingRequests: []
 } as AppState;
 
 const createNotification = (payload: NewNotification) => ({
@@ -63,35 +58,35 @@ const appSlice = createSlice({
 			_.remove(state.notifications, e => e.id === action.payload);
 		},
 		
-		addPairingDevice(state, action: PayloadAction<PairingDevice>) {
-			const index = state.pairingDevices.findIndex(
+		addOutgoingRequest(state, action: PayloadAction<OutgoingRequest>) {
+			const index = state.outgoingRequests.findIndex(
 				d => d.deviceId === action.payload.deviceId
 			);
 			if (index === -1)
-				state.pairingDevices.push(action.payload);
+				state.outgoingRequests.push(action.payload);
 			else
-				state.pairingDevices[index].timeout = action.payload.timeout;
+				state.outgoingRequests[index].expires = action.payload.expires;
 
 			// remove time-out devices
 			const currentTimestamp = Date.now();
-			_.remove(state.pairingDevices, e => e.timeout < currentTimestamp);
+			_.remove(state.outgoingRequests, e => e.expires < currentTimestamp);
 		},
 		// remove by deviceId
-		removePairingDevices(state, action: PayloadAction<string[]>) {
+		removeOutgoingRequests(state, action: PayloadAction<string[]>) {
 			const currentTimestamp = Date.now();
-			_.remove(state.pairingDevices, e => (
-				e.timeout < currentTimestamp
+			_.remove(state.outgoingRequests, e => (
+				e.expires < currentTimestamp
 				|| (action.payload.includes(e.deviceId))
 			));
 		},
-		addReceivedPairEvent(state, action: PayloadAction<PairEvent>) {
+		addIncomingRequest(state, action: PayloadAction<Device>) {
 			// remove duplicates
-			_.remove(state.receivedPairEvents, e => e.deviceId === action.payload.deviceId);
-			state.receivedPairEvents.push(action.payload);
+			_.remove(state.incomingRequests, e => e.deviceId === action.payload.deviceId);
+			state.incomingRequests.push(action.payload);
 		},
 		// remove by deviceId
-		removeReceivedPairEvents(state, action: PayloadAction<string[]>) {
-			_.remove(state.receivedPairEvents, e => (
+		removeIncomingRequests(state, action: PayloadAction<string[]>) {
+			_.remove(state.incomingRequests, e => (
 				action.payload.includes(e.deviceId)
 			));
 		},
@@ -103,7 +98,7 @@ const appSlice = createSlice({
 			state.showDevices[action.payload.type] = action.payload.value;
 		},
 
-		setOnlineDevices(state, action: PayloadAction<ListResponse>) {
+		setOnlineDevices(state, action: PayloadAction<DeviceList>) {
 			state.onlineDevices = action.payload;
 		},
 

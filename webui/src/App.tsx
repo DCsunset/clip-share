@@ -16,6 +16,7 @@ import { generateChallenge } from './utils/crypto';
 import { AuthRequest } from './types/types';
 import { appActions } from './store/app';
 import { selectNewDevices } from './store/selectors';
+import DevicePairing from './components/DevicePairing';
 
 const theme = createTheme({
   typography: {
@@ -108,6 +109,10 @@ function App() {
       socket.on("list", data => {
         dispatch(appActions.setOnlineDevices(data));
       });
+      
+      socket.on("pair", data => {
+        dispatch(appActions.addIncomingRequest(data));
+      });
 
       return socket;
     }
@@ -143,6 +148,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <DevicePairing socket={socket} />
       <Layout>
         <Container sx={{ px: 1, py: 2 }} >
           <Grid container spacing={2}>
