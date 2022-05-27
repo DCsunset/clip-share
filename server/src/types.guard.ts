@@ -35,7 +35,7 @@ export function isListResponse(obj: any, _argumentName?: string): obj is ListRes
             (e !== null &&
                 typeof e === "object" ||
                 typeof e === "function") &&
-            typeof e.id === "string" &&
+            typeof e.deviceId === "string" &&
             typeof e.name === "string"
         )
     )

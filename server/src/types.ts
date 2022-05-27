@@ -53,7 +53,7 @@ export type AuthRequest = {
  * @see {isListResponse} ts-auto-guard:type-guard
  */
 export type ListResponse = {
-	id: string,
+	deviceId: string,
 	name: string
 }[];
 

@@ -110,10 +110,10 @@ io.on("connection", async socket => {
 		socket.on("list", () => {
 			const devices = Array.from(onlineDevices.entries())
 				.map(([id, info]) => ({
-					id,
+					deviceId: id,
 					name: info.name,
 				}))
-				.filter(({ id }) => id !== deviceId);
+				.filter(({ deviceId: id }) => id !== deviceId);
 			const listResponse: ListResponse = devices;
 			socket.emit("list", listResponse);
 		});
