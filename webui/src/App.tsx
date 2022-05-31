@@ -11,12 +11,19 @@ import { blue, green, grey } from '@mui/material/colors';
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import './App.css';
-import { useRootDispatch, useRootSelector } from './store/hooks';
 import { generateChallenge } from './utils/crypto';
-import { AuthRequest } from './types/types';
-import { appActions } from './store/app';
-import { selectNewDevices } from './store/selectors';
+import { AuthRequest } from './types/server';
 import DevicePairing from './components/DevicePairing';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { configState } from './states/config';
+import {
+  incomingRequestListState,
+  localDeviceState,
+  newDeviceListState,
+  onlineDeviceListState,
+  pairedDeviceListState
+} from './states/device';
+import { notificationState, socketStatusState } from './states/app';
 
 const theme = createTheme({
   typography: {
@@ -54,13 +61,15 @@ const theme = createTheme({
 });
 
 function App() {
-  const dispatch = useRootDispatch();
-  const serverUrl = useRootSelector(state => state.settings.serverUrl);
-  const fetchingInterval = useRootSelector(state => state.settings.fetchingInterval);
-  const reconnectionDelayMax = useRootSelector(state => state.settings.reconnectionDelayMax);
-  const deviceInfo = useRootSelector(state => state.settings.deviceInfo);
-  const newDevices = useRootSelector(selectNewDevices);
-  const pairedDevices = useRootSelector(state => state.settings.pairedDevices);
+  const config = useRecoilValue(configState);
+  const localDevice = useRecoilValue(localDeviceState);
+  const newDevices = useRecoilValue(newDeviceListState);
+  const pairedDevices = useRecoilValue(pairedDeviceListState);
+  const setSocketStatus = useSetRecoilState(socketStatusState);
+  const setNotification = useSetRecoilState(notificationState);
+  const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
+  const setIncomingRequests = useSetRecoilState(incomingRequestListState);
+
   const [socket, setSocket] = useState<Socket | null>(null);
 
   // reconnect to server on url change
@@ -68,24 +77,24 @@ function App() {
     console.log("[socket] Connecting");
     const connectToServer = async () => {
       let socket: Socket | null = null;
-      const challenge = await generateChallenge(deviceInfo.privateKey);
+      const challenge = await generateChallenge(localDevice.privateKey);
       const socketOptions: Partial<ManagerOptions & SocketOptions> = {
-        reconnectionDelayMax,
+        reconnectionDelayMax: config.reconnectionDelayMax,
         transports: ["websocket"],
         auth: {
           challenge,
-          name: deviceInfo.name,
-          publicKey: deviceInfo.publicKey
+          name: localDevice.name,
+          publicKey: localDevice.publicKey
         } as AuthRequest
       };
 
-      socket = serverUrl.length > 0
-        ? io(serverUrl, socketOptions)
+      socket = config.serverUrl.length > 0
+        ? io(config.serverUrl, socketOptions)
         : io(socketOptions);
         
       socket.on("connect", () => {
         console.log("[socket] Connected to server");
-        dispatch(appActions.setSocketStatus("connected"));
+        setSocketStatus("connected");
       });
       
       socket.on("connect_error", () => {
@@ -95,23 +104,23 @@ function App() {
       
       socket.on("disconnect", reason => {
         console.log(`[socket] Disconnected from server: ${reason}`);
-        dispatch(appActions.setSocketStatus("disconnected"));
+        setSocketStatus("disconnected");
         socket = null;
       });
       
       socket.on("error", error => {
-        dispatch(appActions.addNotification({
+        setNotification({
           color: "error",
-          text: `Socket Error: ${error}`
-        }));
+          message: `Socket Error: ${error}`
+        });
       });
       
       socket.on("list", data => {
-        dispatch(appActions.setOnlineDevices(data));
+        setOnlineDevices(data);
       });
       
       socket.on("pair", data => {
-        dispatch(appActions.addIncomingRequest(data));
+        setIncomingRequests(data);
       });
 
       return socket;
@@ -121,10 +130,10 @@ function App() {
       .then(setSocket)
       .catch(err => {
         setSocket(null);
-        dispatch(appActions.addNotification({
+        setNotification({
           color: "error",
-          text: `Error: ${err.message}`
-        }));
+          message: `Error: ${err.message}`
+        });
       });
     
     return () => {
@@ -132,7 +141,7 @@ function App() {
         socket.disconnect();
       }
     };
-  }, [serverUrl, deviceInfo, reconnectionDelayMax]);
+  }, [config, localDevice]);
   
   // Fetching device list
   useEffect(() => {
@@ -141,9 +150,9 @@ function App() {
     
     const id = setInterval(() => {
       socket.emit("list");
-    }, fetchingInterval);
+    }, config.fetchingInterval);
     return () => clearInterval(id);
-  }, [socket, fetchingInterval]);
+  }, [socket, config]);
 
   return (
     <ThemeProvider theme={theme}>

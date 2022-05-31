@@ -1,32 +1,41 @@
 import { Snackbar, duration, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { appActions } from "../store/app";
-import { useRootDispatch, useRootSelector } from "../store/hooks";
 import { Socket } from "socket.io-client";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
+import { PairEvent } from "../types/server";
 
 type Props = {
 	socket: Socket | null
 };
 
 function DevicePairing(props: Props) {
-	const dispatch = useRootDispatch();
-  const outgoingRequests = useRootSelector(state => state.app.outgoingRequests);
-  const incomingRequests = useRootSelector(state => state.app.incomingRequests);
-	// TODO: remove duplicate ids
-	// Remove already paired devices
-	const pendingRequests = incomingRequests.filter(incoming => (
-		outgoingRequests.findIndex(d => incoming.deviceId === d.deviceId) === -1
-	));
-	const [invalidPairEvents, setInvalidPairEvents] = useState<string[]>([]);
+  const [incomingRequests, setIncomingRequests] = useRecoilState(incomingRequestListState);
+	const pairedDevices = useRecoilValue(pairedDeviceListState);
+	const [currentEvent, setCurrentEvent] = useState<PairEvent | null>(null);
+	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const socket = props.socket;
 	
-	const removePairedEvent = (deviceId: string) => {
-		setInvalidPairEvents(invalidPairEvents.concat([deviceId]));
-
-		// Wait until transition finishes
-		setTimeout(() => {
-			dispatch(appActions.removeOutgoingRequests([deviceId]));
-		}, duration.leavingScreen);
+	// Update notification on change
+	useEffect(() => {
+		if (incomingRequests.length && !currentEvent) {
+			setCurrentEvent(incomingRequests[0]);
+			// remove the first event
+			setIncomingRequests(prev => prev.slice(1));
+			setSnackbarOpen(true);
+		}
+	}, [incomingRequests, currentEvent, snackbarOpen]);
+	
+	const handleSnackbarClose = (_event: React.SyntheticEvent | Event, reason?: string) => {
+		if (reason === 'clickaway') {
+			return;
+		}
+		setSnackbarOpen(false);
+  };
+	
+	// Invalidate current event only after the snackbar closes completely
+	const handleSnackbarExited = () => {
+		setCurrentEvent(null);
 	};
 
 	const acceptPairing = (deviceId: string) => {
@@ -38,33 +47,27 @@ function DevicePairing(props: Props) {
 		if (socket !== null) {
 		}
 	};
-	
-	// TODO: add to paired devices
-	useEffect(() => {
-
-	}, [incomingRequests, outgoingRequests]);
 
 	return (
-		<>
-			{pendingRequests.map(({ name, deviceId }) => (
-				<Snackbar
-					anchorOrigin={{
-						horizontal: "center",
-						vertical: "top"
-					}}
-					key={deviceId}
-					open={!invalidPairEvents.includes(deviceId)}
-				>
-					<>
-						<Typography>
-							Pairing Request
-						</Typography>
-						Device {name} ({deviceId.substring(0, 17)})
-					</>
-				</Snackbar>
-			))}
-		</>
-	)
+		<Snackbar
+			anchorOrigin={{
+				horizontal: "center",
+				vertical: "top"
+			}}
+			onClose={handleSnackbarClose}
+			TransitionProps={{
+				onExited: handleSnackbarExited
+			}}
+			open={snackbarOpen}
+		>
+			<>
+				<Typography>
+					Pairing Request
+				</Typography>
+				Device {currentEvent?.name} ({currentEvent?.deviceId.substring(0, 17)})
+			</>
+		</Snackbar>
+	);
 }
 
 export default DevicePairing;

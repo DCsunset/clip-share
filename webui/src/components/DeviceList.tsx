@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Icon from '@mdi/react';
 import {
 	Box,
@@ -12,23 +13,20 @@ import {
 import {
 	mdiChevronDown, mdiLaptop, mdiLinkVariant, mdiPlus
 } from "@mdi/js";
-import { useRootDispatch, useRootSelector } from '../store/hooks';
 import { DeviceType } from '../types/app';
-import { appActions } from '../store/app';
-import { ListResponse } from '../types/types';
+import { Device } from "../types/server";
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
 }
 
 type Props = {
-	type: DeviceType
-	devices: ListResponse
+	type: DeviceType,
+	devices: Device[]
 };
 
 function DeviceList(props: Props) {
-	const showDevices = useRootSelector(state => state.app.showDevices[props.type]);
-	const dispatch = useRootDispatch();
+	const [visible, setVisible] = useState(true);
 	
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
@@ -63,15 +61,12 @@ function DeviceList(props: Props) {
 					<IconButton
 						disableRipple
 						sx={{ p: 0 }}
-						onClick={() => dispatch(appActions.setShowDevices({
-							type: props.type,
-							value: !showDevices
-						}))}
+						onClick={() => setVisible(!visible)}
 					>
 						<Icon
 							path={mdiChevronDown}
 							style={{
-								transform: `rotate(${showDevices ? "0" : "-180deg"})`,
+								transform: `rotate(${visible? "0" : "-180deg"})`,
 								transition: "all 0.2s"
 							}}
 							size={1}
@@ -80,11 +75,11 @@ function DeviceList(props: Props) {
 				</Box>
 				<hr />
 				
-				<Collapse in={showDevices}>
+				<Collapse in={visible}>
 					<List sx={{ py: 0 }}>
 						{props.devices.map(device => (
 							<ListItem
-								key={device.id}
+								key={device.deviceId}
 								sx={{ px: 1 }}
 							>
 								<span>{device.name}</span>
@@ -92,7 +87,7 @@ function DeviceList(props: Props) {
 									opacity: 0.75,
 									ml: 1
 								}}>
-									({device.id.substring(0, 17)})
+									({device.deviceId.substring(0, 17)})
 								</Box>
 								<span style={{ flexGrow: 1 }} />
 								<IconButton size="small" title="Pair">
