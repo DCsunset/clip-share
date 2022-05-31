@@ -3,8 +3,11 @@ import {
 	AuthRequest,
 	DataBuffer,
 	DataType,
+	Device,
 	DeviceState,
-	ListResponse,
+	ErrCode,
+	ErrEvent,
+	EventError,
 	PairEvent,
 	ShareEvent,
 } from "./types";
@@ -16,6 +19,10 @@ import {
 import { readConfig } from "./config";
 import { getFingerprint, verifyChallenge } from "./utils/crypto";
 import { createServer } from "http";
+
+function newErrEvent(code: ErrCode, device?: Device): ErrEvent {
+	return { code, device };
+}
 
 const config = readConfig();
 // Buffer unsent data (wait until device online)
@@ -53,7 +60,7 @@ const io = new Server({
 io.on("connection", async socket => {
 	try {
 		if (!isAuthRequest(socket.handshake.auth)) {
-			throw new Error("Invalid auth request");
+			throw new EventError(ErrCode.InvalidRequest);
 		}
 		const { challenge, publicKey, name } = socket.handshake.auth as AuthRequest;
 
@@ -62,16 +69,16 @@ io.on("connection", async socket => {
 
 		// Verify challenge
 		if (!await verifyChallenge(publicKey, challenge)) {
-			throw new Error("Invalid public key or challenge");
+			throw new EventError(ErrCode.AuthFailure);
 		};
 
 		if (connectionMap.has(socket.id)) {
-			throw new Error("Socket ID already used");
+			throw new EventError(ErrCode.SocketIdUsed);
 		}
 
 		const deviceId = await getFingerprint(publicKey);
 		if (onlineDevices.has(deviceId)) {
-			throw new Error("Device already online");
+			throw new EventError(ErrCode.DeviceAlreadyOnline);
 		}
 
 		connectionMap.set(socket.id, deviceId);
@@ -114,8 +121,7 @@ io.on("connection", async socket => {
 					name: info.name,
 				}))
 				.filter(({ deviceId: id }) => id !== deviceId);
-			const listResponse: ListResponse = devices;
-			socket.emit("list", listResponse);
+			socket.emit("list", devices);
 		});
 		
 		// Pair device
@@ -123,19 +129,25 @@ io.on("connection", async socket => {
 			// Forward messages from devices
 			// check type
 			if (!isPairEvent(data)) {
-				socket.emit("error", "Invalid pair request");
+				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
 				return;
 			}
 			const pairEvent = data as PairEvent;
 			if (!onlineDevices.has(pairEvent.deviceId)) {
-				socket.emit("error", "Device to pair not online");
+				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, {
+					deviceId: pairEvent.deviceId,
+					name: pairEvent.name
+				}));
 				return;
 			}
 
 			// Info of the other devices
 			const otherDevice = onlineDevices.get(pairEvent.deviceId)!;
 			if (otherDevice.name != pairEvent.name) {
-				socket.emit("error", `Device name ${pairEvent.name} mismatched`);
+				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, {
+					deviceId: pairEvent.deviceId,
+					name: pairEvent.name
+				}));
 				return;
 			}
 
@@ -150,7 +162,7 @@ io.on("connection", async socket => {
 		// Share data
 		socket.on("share", data => {
 			if (!isShareEvent(data)) {
-				socket.emit("error", "Invalid share event");
+				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
 				return;
 			}
 			const shareEvent = data as ShareEvent;
@@ -169,7 +181,13 @@ io.on("connection", async socket => {
 		});
 	}
 	catch (err) {
-		socket.emit("error", (err as Error).message);
+		if (err instanceof EventError) {
+			socket.emit("error", err.toErrEvent());
+		}
+		else {
+			socket.emit("error", newErrEvent(ErrCode.InternalError));
+			console.error((err as Error).message);
+		}
 		socket.disconnect();
 		return;
 	}

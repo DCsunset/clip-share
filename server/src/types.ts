@@ -48,14 +48,18 @@ export type AuthRequest = {
 };
 
 /**
- * Response for list request
+ * Device
  * 
- * @see {isListResponse} ts-auto-guard:type-guard
+ * @see {isDevice} ts-auto-guard:type-guard
  */
-export type ListResponse = {
+export type Device = {
+	/// the device id (fingerprint)
 	deviceId: string,
-	name: string
-}[];
+	/// device name
+	name: string,
+	/// public key for e2ee
+	publicKey?: string
+}
 
 /**
  * Event to pair a specific device
@@ -63,14 +67,7 @@ export type ListResponse = {
  * 
  * @see {isPairEvent} ts-auto-guard:type-guard
  */
-export interface PairEvent {
-	/// the device to pair (fingerprint)
-	deviceId: string;
-	/// device name
-	name: string;
-	/// sender's public key for e2ee
-	publicKey: string;
-};
+export type PairEvent = Required<Device>
 
 /**
  * Event to share data
@@ -87,3 +84,35 @@ export interface ShareEvent {
 		content: string;
 	}
 };
+
+/**
+ * Error code
+ */
+export enum ErrCode {
+	InvalidRequest,
+	AuthFailure,
+	SocketIdUsed,
+	DeviceAlreadyOnline,
+	DeviceOffline,
+	DeviceNameMismatched,
+	InternalError
+};
+
+export type ErrEvent = {
+	code: ErrCode,
+	// Error from device
+	device?: Device
+};
+
+export class EventError extends Error {
+	constructor(private code: ErrCode, private device?: Device) {
+		super();
+	}
+
+	toErrEvent() {
+		return {
+			code: this.code,
+			device: this.device
+		};
+	}
+}

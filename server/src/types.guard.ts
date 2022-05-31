@@ -2,7 +2,7 @@
  * Generated type guards for "types.ts".
  * WARNING: Do not manually change this file.
  */
-import { Config, AuthRequest, ListResponse, PairEvent, ShareEvent } from "./types";
+import { Config, AuthRequest, Device, PairEvent, ShareEvent } from "./types";
 
 export function isConfig(obj: any, _argumentName?: string): obj is Config {
     return (
@@ -28,16 +28,15 @@ export function isAuthRequest(obj: any, _argumentName?: string): obj is AuthRequ
     )
 }
 
-export function isListResponse(obj: any, _argumentName?: string): obj is ListResponse {
+export function isDevice(obj: any, _argumentName?: string): obj is Device {
     return (
-        Array.isArray(obj) &&
-        obj.every((e: any) =>
-            (e !== null &&
-                typeof e === "object" ||
-                typeof e === "function") &&
-            typeof e.deviceId === "string" &&
-            typeof e.name === "string"
-        )
+        (obj !== null &&
+            typeof obj === "object" ||
+            typeof obj === "function") &&
+        typeof obj.deviceId === "string" &&
+        typeof obj.name === "string" &&
+        (typeof obj.publicKey === "undefined" ||
+            typeof obj.publicKey === "string")
     )
 }
 
