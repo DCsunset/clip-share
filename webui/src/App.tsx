@@ -17,7 +17,6 @@ import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
-  incomingRequestListState,
   localDeviceState,
   newDeviceListState,
   onlineDeviceListState,
@@ -68,7 +67,6 @@ function App() {
   const setSocketStatus = useSetRecoilState(socketStatusState);
   const setNotification = useSetRecoilState(notificationState);
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
-  const setIncomingRequests = useSetRecoilState(incomingRequestListState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -117,10 +115,6 @@ function App() {
       
       socket.on("list", data => {
         setOnlineDevices(data);
-      });
-      
-      socket.on("pair", data => {
-        setIncomingRequests(data);
       });
 
       return socket;
