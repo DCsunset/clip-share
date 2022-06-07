@@ -1,24 +1,27 @@
-import { Alert, AppBar, duration, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
+import { Alert, AppBar, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
 import { Box } from "@mui/system";
-import { useState } from "react";
-import { appActions, AppState } from "../store/app";
-import { useRootDispatch, useRootSelector } from "../store/hooks";
-import { Notification } from "../types/app";
+import { useEffect, useState } from "react";
 import Logo from "../logo.svg";
 import { mdiCog } from "@mdi/js";
 import Icon from "@mdi/react";
 import SettingsDialog from "./SettingsDialog";
+import { useRecoilState, useRecoilValue } from "recoil";
+import {
+	notificationState,
+	SocketStatus,
+	socketStatusState,
+	Notification
+} from "../states/app";
 
-function getStatusColor(status: AppState["socketStatus"]) {
+function getStatusColor(status: SocketStatus) {
 	const colorMap = {
 		connected: "success.main",
 		connecting: "info.main",
 		disconnected: "error.main",
 		unavailable: "grey",
 	} as {
-		[status in typeof status]: string
-	};
-	
+			[status in typeof status]: string
+		};
 	return colorMap[status];
 }
 
@@ -27,24 +30,37 @@ interface Props {
 };
 
 function Layout(props: Props) {
-	const notifications = useRootSelector(state => state.app.notifications);
-	const socketStatus = useRootSelector(state => state.app.socketStatus);
-	const dispatch = useRootDispatch();
-	const [settingsDialog, setSettingsDialog] = useState(false);
+	const [notification, setNotification] = useRecoilState(notificationState);
+	// current displayed notification (delayed destruction and update)
+	const [currentNotification, setCurrentNotification] = useState<Notification | null>(null);
+	const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-	// Notifications to be removed
-	const [invalidNotifications, setInvalidNotifications] = useState([] as string[]);
-	const handleSnackbarClose = (reason: string, notification: Notification) => {
-		if (reason === "clickaway") {
+	const socketStatus = useRecoilValue(socketStatusState);
+	const [settingsDialog, setSettingsDialog] = useState(false);
+	
+	// Update notification on change
+	useEffect(() => {
+		if (notification && !currentNotification) {
+			setCurrentNotification(notification);
+			setNotification(null);
+			setSnackbarOpen(true);
+		}
+		else if (notification && currentNotification && snackbarOpen) {
+			// Close an active snack when a new one is adde
+			setSnackbarOpen(false);
+		}
+	}, [notification, currentNotification, snackbarOpen])
+
+	const handleSnackbarClose = (_event: React.SyntheticEvent | Event, reason?: string) => {
+		if (reason === 'clickaway') {
 			return;
 		}
-		setInvalidNotifications(invalidNotifications.concat([notification.id]));
-
-		// Wait until transition finishes
-		setTimeout(() => {
-			setInvalidNotifications(invalidNotifications.filter(e => e !== notification.id));
-			dispatch(appActions.removeNotification(notification.id));
-		}, duration.leavingScreen);
+		setSnackbarOpen(false);
+  };
+	
+	// Reset current notification only after the snackbar closes completely
+	const handleSnackbarExited = () => {
+		setCurrentNotification(null);
 	};
 
 	return (
@@ -84,28 +100,27 @@ function Layout(props: Props) {
 				</Toolbar>
 			</AppBar>
 
-			{notifications.map(notification => (
-				<Snackbar
-					anchorOrigin={{
-						horizontal: "center",
-						vertical: "bottom"
-					}}
-					key={notification.id}
-					open={!invalidNotifications.includes(notification.id)}
-					autoHideDuration={5000}
-					onClose={(_, reason) => handleSnackbarClose(reason, notification)}
+			<Snackbar
+				anchorOrigin={{
+					horizontal: "center",
+					vertical: "bottom"
+				}}
+				open={snackbarOpen}
+				onClose={handleSnackbarClose}
+				TransitionProps={{
+					onExited: handleSnackbarExited
+				}}
+				autoHideDuration={5000}
+			>
+				<Alert
+					variant="filled"
+					onClose={handleSnackbarClose}
+					severity={currentNotification?.color}
 				>
-					<Alert
-						elevation={6}
-						variant="filled"
-						onClose={() => handleSnackbarClose("", notification)}
-						severity={notification.color}
-					>
-						{notification.text}
-					</Alert>
-				</Snackbar>
-			))}
-			
+					{currentNotification?.message}
+				</Alert>
+			</Snackbar>
+
 			<SettingsDialog open={settingsDialog} onClose={() => setSettingsDialog(false)} />
 
 			<div style={{ height: "100%" }}>

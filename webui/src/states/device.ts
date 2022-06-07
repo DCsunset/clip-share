@@ -1,4 +1,4 @@
-import { Device, PairEvent } from "../types/server";
+import { Device } from "../types/server";
 import { atom, selector } from "recoil";
 import { hasDevice } from "../utils/device";
 
@@ -40,16 +40,3 @@ export const newDeviceListState = selector({
 		));
 	}
 })
-
-export interface LocalDevice extends Device {
-	privateKey: string
-}
-export const localDeviceState = atom<LocalDevice>({
-	key: "LocalDevice",
-	default: {
-		deviceId: "",
-		name: "Unnamed",
-		privateKey: "",
-		publicKey: ""
-	}
-});

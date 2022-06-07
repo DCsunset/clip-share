@@ -14,10 +14,9 @@ import {
 	TextFieldProps
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { appActions } from "../store/app";
-import { genKeyPairs } from "../store/async-actions";
-import { useRootDispatch, useRootSelector } from "../store/hooks";
-import { settingsActions } from "../store/settings";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { notificationState } from "../states/app";
+import { configState, initDevice } from "../states/config";
 
 interface Props {
 	open: boolean;
@@ -25,13 +24,12 @@ interface Props {
 };
 
 function SettingsDialog(props: Props) {
-	const settings = useRootSelector(state => state.settings);
-	const deviceInfo = useRootSelector(state => state.settings.deviceInfo);
-	const dispatch = useRootDispatch();
-	const [serverUrl, setServerUrl] = useState(settings.serverUrl);
-	const [deviceName, setDeviceName] = useState(deviceInfo.name);
-	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(settings.reconnectionDelayMax.toString());
-	const [fetchingInterval, setFetchingInterval] = useState(settings.fetchingInterval.toString());
+	const [config, setConfig] = useRecoilState(configState);
+	const setNotification = useSetRecoilState(notificationState);
+	const [serverUrl, setServerUrl] = useState(config.serverUrl);
+	const [deviceName, setDeviceName] = useState(config.localDevice?.name ?? "Unnamed");
+	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(config.reconnectionDelayMax.toString());
+	const [fetchingInterval, setFetchingInterval] = useState(config.fetchingInterval.toString());
 
 	const validNumber = (s: string) => {
 		const num = parseInt(s);
@@ -46,46 +44,69 @@ function SettingsDialog(props: Props) {
 		&& validFetchingInterval();
 
 	useEffect(() => {
-		// Generate key pairs if empty
-		if (deviceInfo.publicKey.length === 0)
-			dispatch(genKeyPairs());
-	}, [deviceInfo]);
+		// Init device if empty
+		if (!config.localDevice) {
+			const initializeDevice = async () => {
+				const localDevice = await initDevice();
+				setConfig({
+					...config,
+					localDevice
+				});
+			};
+
+			initializeDevice();
+		}
+	}, [config]);
+
+	const regenerateKeyPairs = () => {
+		initDevice().then(device => {
+			setConfig({
+				...config,
+				localDevice: {
+					...device,
+					name: config.localDevice?.name ?? device.name
+				}
+			});
+		});
+	};
 	
 	const save = () => {
 		if (!validSettings())
 			return;
 
 		let updated = false;
-		if (settings.serverUrl != serverUrl) {
+		if (config.serverUrl !== serverUrl) {
 			updated = true;
-			dispatch(settingsActions.update({
+			setConfig({
+				...config,
 				serverUrl
-			}));
+			});
 		}
-		if (deviceInfo.name != deviceName) {
+		if (config.localDevice && config.localDevice.name !== deviceName) {
 			updated = true;
-			dispatch(settingsActions.update({
-				deviceInfo: {
-					...deviceInfo,
+			setConfig({
+				...config,
+				localDevice: {
+					...config.localDevice,
 					name: deviceName
 				}
-			}));
+			});
 		}
 		
 		if (updated) {
-			dispatch(appActions.addNotification({
+			setNotification({
 				color: "success",
-				text: "Settings updated successfully"
-			}));
+				message: "Settings updated successfully"
+			});
 		}
 		props.onClose();
 	};
 	
 	const reset = () => {
-		setServerUrl(settings.serverUrl);
-		setDeviceName(deviceInfo.name);
-		setReconnectionDelayMax(settings.reconnectionDelayMax.toString());
-		setFetchingInterval(settings.fetchingInterval.toString());
+		setServerUrl(config.serverUrl);
+		setDeviceName(config.localDevice?.name ?? "");
+		setReconnectionDelayMax(config.reconnectionDelayMax.toString());
+		setFetchingInterval(config.fetchingInterval.toString());
 	};
 	
 	// styles for required fields
@@ -155,12 +176,12 @@ function SettingsDialog(props: Props) {
 						</ListItemText>
 					</Grid>
 					<Grid item display="inline-flex" alignItems="center">
-						<span>{deviceInfo.id}</span>
+						<span>{config.localDevice?.deviceId}</span>
 						<IconButton
 							title="Re-generate"
 							color="secondary"
 							size="small"
-							onClick={() => dispatch(genKeyPairs())}
+							onClick={regenerateKeyPairs}
 							sx={{ ml: 1.5 }}
 						>
 							<Icon path={mdiRefresh} size={1} />
