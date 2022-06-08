@@ -17,7 +17,6 @@ import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
-  localDeviceState,
   newDeviceListState,
   onlineDeviceListState,
   pairedDeviceListState
@@ -61,7 +60,6 @@ const theme = createTheme({
 
 function App() {
   const config = useRecoilValue(configState);
-  const localDevice = useRecoilValue(localDeviceState);
   const newDevices = useRecoilValue(newDeviceListState);
   const pairedDevices = useRecoilValue(pairedDeviceListState);
   const setSocketStatus = useSetRecoilState(socketStatusState);
@@ -75,14 +73,17 @@ function App() {
     console.log("[socket] Connecting");
     const connectToServer = async () => {
       let socket: Socket | null = null;
-      const challenge = await generateChallenge(localDevice.privateKey);
+      if (!config.localDevice) {
+        return null;
+      }
+      const challenge = await generateChallenge(config.localDevice.privateKey);
       const socketOptions: Partial<ManagerOptions & SocketOptions> = {
         reconnectionDelayMax: config.reconnectionDelayMax,
         transports: ["websocket"],
         auth: {
           challenge,
-          name: localDevice.name,
-          publicKey: localDevice.publicKey
+          name: config.localDevice.name,
+          publicKey: config.localDevice.publicKey
         } as AuthRequest
       };
 
@@ -135,7 +136,7 @@ function App() {
         socket.disconnect();
       }
     };
-  }, [config, localDevice]);
+  }, [config]);
   
   // Fetching device list
   useEffect(() => {

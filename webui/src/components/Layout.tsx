@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Logo from "../logo.svg";
 import { mdiCog } from "@mdi/js";
 import Icon from "@mdi/react";
-import SettingsDialog from "./SettingsDialog";
+import ConfigDialog from "./ConfigDialog";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
 	notificationState,
@@ -121,7 +121,7 @@ function Layout(props: Props) {
 				</Alert>
 			</Snackbar>
 
-			<SettingsDialog open={settingsDialog} onClose={() => setSettingsDialog(false)} />
+			<ConfigDialog open={settingsDialog} onClose={() => setSettingsDialog(false)} />
 
 			<div style={{ height: "100%" }}>
 				{props.children}

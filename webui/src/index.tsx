@@ -1,8 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Provider } from "react-redux";
+import { RecoilRoot } from "recoil";
 import App from './App';
-import store from './store';
 
 import './index.css';
 
@@ -14,9 +13,9 @@ import '@fontsource/open-sans/700.css';
 
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={store}>
+    <RecoilRoot>
       <App />
-    </Provider>
+    </RecoilRoot>
   </React.StrictMode>,
   document.getElementById('root')
 )
