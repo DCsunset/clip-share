@@ -68,82 +68,93 @@ function App() {
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
-
-  // reconnect to server on url change
-  useEffect(() => {
-    console.log("[socket] Connecting");
-    const connectToServer = async () => {
-      let socket: Socket | null = null;
-      if (!config.localDevice) {
-        return null;
-      }
-      const challenge = await generateChallenge(config.localDevice.privateKey);
-      const socketOptions: Partial<ManagerOptions & SocketOptions> = {
-        reconnectionDelayMax: config.reconnectionDelayMax,
-        transports: ["websocket"],
-        auth: {
-          challenge,
-          name: config.localDevice.name,
-          publicKey: config.localDevice.publicKey
-        } as AuthRequest
-      };
-
-      socket = config.serverUrl.length > 0
-        ? io(config.serverUrl, socketOptions)
-        : io(socketOptions);
-        
-      socket.on("connect", () => {
-        console.log("[socket] Connected to server");
-        setSocketStatus("connected");
-      });
-      
-      socket.on("connect_error", () => {
-        console.log("[socket] Fail to connect to server");
-        socket = null;
-      });
-      
-      socket.on("disconnect", reason => {
-        console.log(`[socket] Disconnected from server: ${reason}`);
-        setSocketStatus("disconnected");
-        socket = null;
-      });
-      
-      socket.on("error", (error: ErrEvent) => {
-        setNotification({
-          color: "error",
-          message: `Socket Error: ${errorToString(error)}`
-        });
-      });
-      
-      socket.on("list", data => {
-        setOnlineDevices(data);
-      });
-
-      return socket;
-    }
-    
-    connectToServer()
-      .then(setSocket)
-      .catch(err => {
-        setSocket(null);
-        setNotification({
-          color: "error",
-          message: `Error: ${err.message}`
-        });
-      });
-    
-    return () => {
-      if (socket !== null) {
-        socket.disconnect();
-      }
-    };
-  }, [config]);
   
+  const connectToServer = async () => {
+    let socket: Socket | null = null;
+    if (!config.localDevice) {
+      console.error("Error: Empty local device");
+      return null;
+    }
+    const challenge = await generateChallenge(config.localDevice.privateKey);
+    const socketOptions: Partial<ManagerOptions & SocketOptions> = {
+      reconnectionDelayMax: config.reconnectionDelayMax,
+      transports: ["websocket"],
+      auth: {
+        challenge,
+        name: config.localDevice.name,
+        publicKey: config.localDevice.publicKey
+      } as AuthRequest
+    };
+
+    socket = config.serverUrl.length > 0
+      ? io(config.serverUrl, socketOptions)
+      : io(socketOptions);
+      
+    socket.on("connect", () => {
+      console.log("[socket] Connected to server");
+      setSocketStatus("connected");
+    });
+    
+    socket.on("connect_error", () => {
+      console.log("[socket] Failed to connect to server");
+      socket = null;
+    });
+    
+    socket.on("disconnect", reason => {
+      console.log(`[socket] Disconnected from server: ${reason}`);
+      setSocketStatus("disconnected");
+      if (reason === "io client disconnect" || reason === "io server disconnect") {
+        // For these reasons, the socket won't auto reconnect
+        // Create a new socket to reconnect
+        setSocket(null);
+      }
+    });
+    
+    socket.on("error", (error: ErrEvent) => {
+      setNotification({
+        color: "error",
+        message: `Socket Error: ${errorToString(error)}`
+      });
+    });
+    
+    socket.on("list", data => {
+      setOnlineDevices(data);
+    });
+
+    return socket;
+  }
+
+  // connect to server when socket is null
+  useEffect(() => {
+    if (socket === null && config.localDevice) {
+      console.log("[socket] Creating new socket...");
+      connectToServer()
+        .then(setSocket)
+        .catch(err => {
+          setSocket(null);
+          setNotification({
+            color: "error",
+            message: `Error: ${err.message}`
+          });
+        });
+    }
+  }, [socket, config.localDevice]);
+
+  // Disconnects when config changes
+  useEffect(() => {
+    if (socket !== null) {
+      socket.disconnect();
+    }
+  }, [config])
+    
   // Fetching device list
   useEffect(() => {
-    if (socket === null)
+    if (socket === null) {
       return;
+    }
     
+    // fetch immediately
+    socket.emit("list");
     const id = setInterval(() => {
       socket.emit("list");
     }, config.fetchingInterval);
