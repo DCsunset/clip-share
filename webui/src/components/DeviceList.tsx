@@ -15,6 +15,7 @@ import {
 } from "@mdi/js";
 import { DeviceType } from '../types/app';
 import { Device } from "../types/server";
+import { displayId } from "../utils/device";
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
@@ -87,7 +88,7 @@ function DeviceList(props: Props) {
 									opacity: 0.75,
 									ml: 1
 								}}>
-									({device.deviceId.substring(0, 17)})
+									({displayId(device.deviceId)})
 								</Box>
 								<span style={{ flexGrow: 1 }} />
 								<IconButton size="small" title="Pair">

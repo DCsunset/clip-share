@@ -12,7 +12,7 @@ import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import './App.css';
 import { generateChallenge } from './utils/crypto';
-import { AuthRequest } from './types/server';
+import { AuthRequest, ErrEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
@@ -22,6 +22,7 @@ import {
   pairedDeviceListState
 } from './states/device';
 import { notificationState, socketStatusState } from './states/app';
+import { errorToString } from './utils/errors';
 
 const theme = createTheme({
   typography: {
@@ -107,10 +108,10 @@ function App() {
         socket = null;
       });
       
-      socket.on("error", error => {
+      socket.on("error", (error: ErrEvent) => {
         setNotification({
           color: "error",
-          message: `Socket Error: ${error}`
+          message: `Socket Error: ${errorToString(error)}`
         });
       });
       
