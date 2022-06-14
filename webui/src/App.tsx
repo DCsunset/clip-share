@@ -1,13 +1,9 @@
 import {
   Container,
-  createTheme,
-  CssBaseline,
-  Grid,
-  ThemeProvider
+  Grid
 } from '@mui/material'
 import { useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
-import { blue, green, grey } from '@mui/material/colors';
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import './App.css';
@@ -24,41 +20,6 @@ import {
 import { notificationState, socketStatusState } from './states/app';
 import { errorToString } from './utils/errors';
 
-const theme = createTheme({
-  typography: {
-    fontFamily: [
-      "Open Sans",
-      "sans-serif"
-    ].join(",")
-  },
-  palette: {
-    mode: "dark",
-    primary: {
-      main: blue[500],
-      contrastText: "#fff"
-    },
-    secondary: {
-      main: green[500],
-      contrastText: "#fff"
-    },
-    neutral: {
-      main: grey[900],
-      dark: "#323232",
-      contrastText: "#fff"
-    }
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          // With darker linear-gradient backgroundImage in dark mode
-          backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02))"
-        }
-      }
-    }
-  }
-});
-
 function App() {
   const config = useRecoilValue(configState);
   const newDevices = useRecoilValue(newDeviceListState);
@@ -68,13 +29,9 @@ function App() {
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
-  
+
   const connectToServer = async () => {
     let socket: Socket | null = null;
-    if (!config.localDevice) {
-      console.error("Error: Empty local device");
-      return null;
-    }
     const challenge = await generateChallenge(config.localDevice.privateKey);
     const socketOptions: Partial<ManagerOptions & SocketOptions> = {
       reconnectionDelayMax: config.reconnectionDelayMax,
@@ -89,17 +46,17 @@ function App() {
     socket = config.serverUrl.length > 0
       ? io(config.serverUrl, socketOptions)
       : io(socketOptions);
-      
+
     socket.on("connect", () => {
       console.log("[socket] Connected to server");
       setSocketStatus("connected");
     });
-    
+
     socket.on("connect_error", () => {
       console.log("[socket] Failed to connect to server");
       socket = null;
     });
-    
+
     socket.on("disconnect", reason => {
       console.log(`[socket] Disconnected from server: ${reason}`);
       setSocketStatus("disconnected");
@@ -109,14 +66,14 @@ function App() {
         setSocket(null);
       }
     });
-    
+
     socket.on("error", (error: ErrEvent) => {
       setNotification({
         color: "error",
         message: `Socket Error: ${errorToString(error)}`
       });
     });
-    
+
     socket.on("list", data => {
       setOnlineDevices(data);
     });
@@ -126,7 +83,7 @@ function App() {
 
   // connect to server when socket is null
   useEffect(() => {
-    if (socket === null && config.localDevice) {
+    if (socket === null) {
       console.log("[socket] Creating new socket...");
       connectToServer()
         .then(setSocket)
@@ -138,7 +95,7 @@ function App() {
           });
         });
     }
-  }, [socket, config.localDevice]);
+  }, [socket]);
 
   // Disconnects when config changes
   useEffect(() => {
@@ -146,13 +103,13 @@ function App() {
       socket.disconnect();
     }
   }, [config])
-    
+
   // Fetching device list
   useEffect(() => {
     if (socket === null) {
       return;
     }
-    
+
     // fetch immediately
     socket.emit("list");
     const id = setInterval(() => {
@@ -162,23 +119,20 @@ function App() {
   }, [socket, config]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <Layout>
       <DevicePairing socket={socket} />
-      <Layout>
-        <Container sx={{ px: 1, py: 2 }} >
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="paired" devices={pairedDevices} />
-            </Grid>
-            <Grid item xs={12} md={6} sx={{ p: 1 }}>
-              <DeviceList type="new" devices={newDevices} />
-            </Grid>
+      <Container sx={{ px: 1, py: 2 }} >
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6} sx={{ p: 1 }}>
+            <DeviceList type="paired" devices={pairedDevices} />
           </Grid>
-        </Container>
-      </Layout>
-    </ThemeProvider>
-  )
+          <Grid item xs={12} md={6} sx={{ p: 1 }}>
+            <DeviceList type="new" devices={newDevices} />
+          </Grid>
+        </Grid>
+      </Container>
+    </Layout>
+  );
 }
 
 export default App;

@@ -12,7 +12,7 @@ export const pairedDeviceListState = atom<Required<Device>[]>({
 	key: "PairedDeviceList",
 	default: [],
 	effects: [
-		localStorageEffect("clip-share.pairedDeviceList")
+		localStorageEffect("pairedDeviceList")
 	]
 });
 

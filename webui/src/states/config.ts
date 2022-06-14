@@ -8,7 +8,7 @@ export interface LocalDevice extends Required<Device> {
 }
 
 export type Config = {
-	localDevice: LocalDevice | null,
+	localDevice: LocalDevice,
 	serverUrl: string,
 	reconnectionDelayMax: number,
 	fetchingInterval: number,
@@ -16,16 +16,19 @@ export type Config = {
 
 export const configState = atom<Config>({
 	key: "Config",
-	default: {
-		localDevice: null,
+	effects: [
+		localStorageEffect("config", initConfig)
+	]
+});
+
+export async function initConfig(): Promise<Config> {
+	return {
+		localDevice: await initDevice(),
 		serverUrl: "",
 		reconnectionDelayMax: 5000,
 		fetchingInterval: 3000,
-	},
-	effects: [
-		localStorageEffect("clip-share.config")
-	]
-});
+	};
+}
 
 export async function initDevice(): Promise<LocalDevice> {
 	const { fingerprint, publicKey, privateKey } = await generateKeyPairs();
