@@ -1,6 +1,7 @@
 import { Device } from "../types/server";
 import { atom, selector } from "recoil";
 import { hasDevice } from "../utils/device";
+import { localStorageEffect } from "./effects";
 
 export const onlineDeviceListState = atom<Device[]>({
 	key: "OnlineDeviceList",
@@ -9,7 +10,10 @@ export const onlineDeviceListState = atom<Device[]>({
 
 export const pairedDeviceListState = atom<Required<Device>[]>({
 	key: "PairedDeviceList",
-	default: []
+	default: [],
+	effects: [
+		localStorageEffect("clip-share.pairedDeviceList")
+	]
 });
 
 /// Add new device to paired device list and returns the new list

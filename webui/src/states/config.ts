@@ -1,6 +1,7 @@
 import { atom } from "recoil";
 import { Device } from "../types/server";
 import { generateKeyPairs } from "../utils/crypto";
+import { localStorageEffect } from "./effects";
 
 export interface LocalDevice extends Required<Device> {
 	privateKey: string
@@ -20,7 +21,10 @@ export const configState = atom<Config>({
 		serverUrl: "",
 		reconnectionDelayMax: 5000,
 		fetchingInterval: 3000,
-	}
+	},
+	effects: [
+		localStorageEffect("clip-share.config")
+	]
 });
 
 export async function initDevice(): Promise<LocalDevice> {
