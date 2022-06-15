@@ -2,7 +2,7 @@
  * Generated type guards for "types.ts".
  * WARNING: Do not manually change this file.
  */
-import { Config, AuthRequest, Device, ShareEvent } from "./types";
+import { Config, AuthRequest, Device, PairEvent, ShareEvent } from "./types";
 
 export function isConfig(obj: any, _argumentName?: string): obj is Config {
     return (
@@ -37,6 +37,13 @@ export function isDevice(obj: any, _argumentName?: string): obj is Device {
         typeof obj.name === "string" &&
         (typeof obj.publicKey === "undefined" ||
             typeof obj.publicKey === "string")
+    )
+}
+
+export function isPairEvent(obj: any, _argumentName?: string): obj is PairEvent {
+    return (
+        isDevice(obj) as boolean &&
+        typeof obj.expiryDate === "string"
     )
 }
 

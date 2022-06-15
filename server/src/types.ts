@@ -63,6 +63,16 @@ export type Device = {
 }
 
 /**
+ * Pair Event
+ * 
+ * @see {isPairEvent} ts-auto-guard:type-guard
+ */
+export interface PairEvent extends Device {
+	/// Timestamp of expiration date (ISO string)
+	expiryDate: string
+};
+
+/**
  * Event to share data
  * (request and response share the same type)
  * 

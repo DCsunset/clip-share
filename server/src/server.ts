@@ -8,11 +8,13 @@ import {
 	ErrCode,
 	ErrEvent,
 	EventError,
+	PairEvent,
 	ShareEvent,
 } from "./types";
 import {
 	isAuthRequest,
 	isDevice,
+	isPairEvent,
 	isShareEvent,
 } from "./types.guard";
 import { readConfig } from "./config";
@@ -127,20 +129,20 @@ io.on("connection", async socket => {
 		// Pair device
 		socket.on("pair", data => {
 			// Forward message to the other device
-			if (!isDevice(data)) {
+			if (!isPairEvent(data)) {
 				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
 				return;
 			}
-			const device = data as Device;
-			if (!onlineDevices.has(device.deviceId)) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, device));
+			const event = data as PairEvent;
+			if (!onlineDevices.has(event.deviceId)) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, event));
 				return;
 			}
 
 			// Info of the other devices
-			const otherDevice = onlineDevices.get(device.deviceId)!;
-			if (otherDevice.name != device.name) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, device));
+			const otherDevice = onlineDevices.get(event.deviceId)!;
+			if (otherDevice.name != event.name) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, event));
 				return;
 			}
 
@@ -149,7 +151,8 @@ io.on("connection", async socket => {
 				deviceId,
 				name,
 				publicKey: otherDevice.publicKey,
-			} as Required<Device>);
+				expiryDate: event.expiryDate
+			} as Required<PairEvent>);
 		});
 		
 		// Share data
