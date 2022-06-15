@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "type": "cp ../server/src/types*.ts ./src/types/"
+    "type": "cp ../server/src/types.ts ./src/types/server.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.7.1",

@@ -8,11 +8,12 @@ import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import './App.css';
 import { generateChallenge } from './utils/crypto';
-import { AuthRequest, ErrEvent } from './types/server';
+import { AuthRequest, ErrEvent, PairEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
+  incomingRequestListState,
   newDeviceListState,
   onlineDeviceListState,
   pairedDeviceListState
@@ -27,6 +28,7 @@ function App() {
   const setSocketStatus = useSetRecoilState(socketStatusState);
   const setNotification = useSetRecoilState(notificationState);
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
+  const setIncomingRequests = useSetRecoilState(incomingRequestListState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -76,6 +78,16 @@ function App() {
 
     socket.on("list", data => {
       setOnlineDevices(data);
+    });
+    
+    socket.on("pair", (e: Required<PairEvent>) => {
+      // Use updater form because incomingRequests is not a dependency
+      setIncomingRequests(prev => {
+        if (prev.findIndex(v => v.deviceId === e.deviceId) !== -1) {
+          return prev;
+        }
+        return [ ...prev, e ];
+      });
     });
 
     return socket;

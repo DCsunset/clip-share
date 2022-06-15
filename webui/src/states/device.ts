@@ -1,4 +1,4 @@
-import { Device } from "../types/server";
+import { Device, PairEvent } from "../types/server";
 import { atom, selector } from "recoil";
 import { hasDevice } from "../utils/device";
 import { localStorageEffect } from "./effects";
@@ -43,4 +43,20 @@ export const newDeviceListState = selector({
 			}) === -1
 		));
 	}
-})
+});
+
+export const incomingRequestListState = atom<Required<PairEvent>[]>({
+	key: "incomingRequestList",
+	default: [],
+	effects: [
+		localStorageEffect("incomingRequestList")
+	]
+});
+
+export const outgoingRequestListState= atom<PairEvent[]>({
+	key: "outgoingRequestList",
+	default: [],
+	effects: [
+		localStorageEffect("outgoingRequestList")
+	]
+});

@@ -11,9 +11,10 @@ export type Config = {
 };
 
 export type DeviceState = {
-	name: string;
-	// socket.io connection
-	socketId: string;
+	name: string,
+	/// socket.io connection
+	socketId: string,
+	publicKey: string
 };
 
 /* Data type shared between devices
@@ -40,11 +41,11 @@ export type DataBuffer = {
  */
 export type AuthRequest = {
 	// OpenPGP armored public key (userID not used)
-	publicKey: string;
+	publicKey: string,
 	// signed challenge string (OpenPGP message format)
-	challenge: string;
+	challenge: string,
 	// name of the device
-	name: string;
+	name: string
 };
 
 /**
@@ -62,12 +63,14 @@ export type Device = {
 }
 
 /**
- * Event to pair a specific device
- * (request and response share the same type)
+ * Pair Event
  * 
  * @see {isPairEvent} ts-auto-guard:type-guard
  */
-export type PairEvent = Required<Device>
+export interface PairEvent extends Device {
+	/// Timestamp of expiration date (ISO string)
+	expiryDate: string
+};
 
 /**
  * Event to share data
