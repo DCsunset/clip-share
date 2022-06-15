@@ -8,12 +8,11 @@ import {
 	ErrCode,
 	ErrEvent,
 	EventError,
-	PairEvent,
 	ShareEvent,
 } from "./types";
 import {
 	isAuthRequest,
-	isPairEvent,
+	isDevice,
 	isShareEvent,
 } from "./types.guard";
 import { readConfig } from "./config";
@@ -84,7 +83,8 @@ io.on("connection", async socket => {
 		connectionMap.set(socket.id, deviceId);
 		onlineDevices.set(deviceId, {
 			name,
-			socketId: socket.id
+			socketId: socket.id,
+			publicKey
 		});
 		console.log(`Device ${name} (${deviceId.substring(0, 17)}) connects`);
 		
@@ -126,28 +126,21 @@ io.on("connection", async socket => {
 		
 		// Pair device
 		socket.on("pair", data => {
-			// Forward messages from devices
-			// check type
-			if (!isPairEvent(data)) {
+			// Forward message to the other device
+			if (!isDevice(data)) {
 				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
 				return;
 			}
-			const pairEvent = data as PairEvent;
-			if (!onlineDevices.has(pairEvent.deviceId)) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, {
-					deviceId: pairEvent.deviceId,
-					name: pairEvent.name
-				}));
+			const device = data as Device;
+			if (!onlineDevices.has(device.deviceId)) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, device));
 				return;
 			}
 
 			// Info of the other devices
-			const otherDevice = onlineDevices.get(pairEvent.deviceId)!;
-			if (otherDevice.name != pairEvent.name) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, {
-					deviceId: pairEvent.deviceId,
-					name: pairEvent.name
-				}));
+			const otherDevice = onlineDevices.get(device.deviceId)!;
+			if (otherDevice.name != device.name) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, device));
 				return;
 			}
 
@@ -155,8 +148,8 @@ io.on("connection", async socket => {
 			io.to(otherDevice.socketId).emit("pair", {
 				deviceId,
 				name,
-				publicKey: pairEvent.publicKey,
-			} as PairEvent);
+				publicKey: otherDevice.publicKey,
+			} as Required<Device>);
 		});
 		
 		// Share data
