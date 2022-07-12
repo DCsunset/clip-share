@@ -1,8 +1,10 @@
 import { Snackbar, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
+import { notificationState } from "../states/app.js";
+import { configState } from "../states/config.js";
 import { Device, PairEvent } from "../types/server";
 import { hasDevice } from "../utils/device";
 
@@ -11,6 +13,8 @@ type Props = {
 };
 
 function DevicePairing(props: Props) {
+	const setNotification = useSetRecoilState(notificationState);
+	const config = useRecoilValue(configState);
   const [incomingRequests, setIncomingRequests] = useRecoilState(incomingRequestListState);
   const [outgoingRequests, setOutgoingRequests] = useRecoilState(outgoingRequestListState);
 	const [pairedDevices, setPairedDevices] = useRecoilState(pairedDeviceListState);
@@ -25,8 +29,7 @@ function DevicePairing(props: Props) {
 		if (incomingRequests.length) {
 			if (hasDevice(outgoingRequests, currentDevice)) {
 				// successfully paired
-				if (pairedDevices)
-					setPairedDevices(prev => addPairedDevice(prev, currentDevice));
+				setPairedDevices(prev => addPairedDevice(prev, currentDevice));
 			}
 		}
 
@@ -50,14 +53,37 @@ function DevicePairing(props: Props) {
 		setCurrentEvent(null);
 	};
 
-	const acceptPairing = (deviceId: string) => {
-		if (socket !== null) {
+	const acceptPairing = (device: Required<PairEvent>) => {
+		if (socket === null) {
+			setNotification({
+				color: "error",
+				message: "Connection not established"
+			});
+			return;
 		}
+
+		// successfully paired
+		setPairedDevices(prev => addPairedDevice(prev, device));
+		// acknowledge back
+		socket.emit("pair", {
+			...device,
+			publicKey: config.localDevice!.publicKey
+		} as PairEvent);
 	};
 
-	const rejectPairing = (deviceId: string) => {
-		if (socket !== null) {
+	const startPairing = (device: Device) => {
+		if (socket === null) {
+			setNotification({
+				color: "error",
+				message: "Connection not established"
+			});
+			return;
 		}
+		// Send pair request
+		socket.emit("pair", {
+			...device,
+			publicKey: config.localDevice!.publicKey
+		} as PairEvent);
 	};
 
 	return (
