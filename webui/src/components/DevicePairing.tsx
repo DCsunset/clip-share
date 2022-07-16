@@ -1,18 +1,13 @@
 import { Snackbar, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import { useContext, useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
-import { notificationState } from "../states/app.js";
+import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
 import { Device, PairEvent } from "../types/server";
 import { hasDevice } from "../utils/device";
 
-type Props = {
-	socket: Socket | null
-};
-
-function DevicePairing(props: Props) {
+function DevicePairing() {
 	const setNotification = useSetRecoilState(notificationState);
 	const config = useRecoilValue(configState);
   const [incomingRequests, setIncomingRequests] = useRecoilState(incomingRequestListState);
@@ -21,7 +16,7 @@ function DevicePairing(props: Props) {
 	// Show one event at a time
 	const [currentEvent, setCurrentEvent] = useState<PairEvent | null>(null);
 	const [snackbarOpen, setSnackbarOpen] = useState(false);
-	const socket = props.socket;
+	const socket = useContext(SocketCtx);
 
 	// Update notification on change
 	useEffect(() => {

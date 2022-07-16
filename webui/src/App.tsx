@@ -6,11 +6,10 @@ import { useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
-import './App.css';
 import { generateChallenge } from './utils/crypto';
 import { AuthRequest, ErrEvent, PairEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
   incomingRequestListState,
@@ -18,7 +17,7 @@ import {
   onlineDeviceListState,
   pairedDeviceListState
 } from './states/device';
-import { notificationState, socketStatusState } from './states/app';
+import { notificationState, SocketCtx, socketStatusState } from './states/app';
 import { errorToString } from './utils/errors';
 
 function App() {
@@ -131,19 +130,21 @@ function App() {
   }, [socket, config]);
 
   return (
-    <Layout>
-      <DevicePairing socket={socket} />
-      <Container sx={{ px: 1, py: 2 }} >
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6} sx={{ p: 1 }}>
-            <DeviceList type="paired" devices={pairedDevices} />
+    <SocketCtx.Provider value={socket}>
+      <Layout>
+        <DevicePairing />
+        <Container sx={{ px: 1, py: 2 }} >
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="paired" devices={pairedDevices} />
+            </Grid>
+            <Grid item xs={12} md={6} sx={{ p: 1 }}>
+              <DeviceList type="new" devices={newDevices} />
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={6} sx={{ p: 1 }}>
-            <DeviceList type="new" devices={newDevices} />
-          </Grid>
-        </Grid>
-      </Container>
-    </Layout>
+        </Container>
+      </Layout>
+    </SocketCtx.Provider>
   );
 }
 

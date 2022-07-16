@@ -1,5 +1,7 @@
 import { atom } from "recoil";
+import { createContext } from "react";
 import { AlertColor } from "@mui/material";
+import { Socket } from "socket.io-client";
 
 export type Notification = {
 	color: AlertColor,
@@ -17,3 +19,9 @@ export const socketStatusState = atom<SocketStatus>({
 	key: "SocketStatus",
 	default: "disconnected"
 });
+
+/**
+ * Use ctx for socket
+ * because recoil state allows only read-only access to its fields
+ */
+export const SocketCtx = createContext<Socket | null>(null);
