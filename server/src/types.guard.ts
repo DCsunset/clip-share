@@ -42,8 +42,14 @@ export function isDevice(obj: any, _argumentName?: string): obj is Device {
 
 export function isPairEvent(obj: any, _argumentName?: string): obj is PairEvent {
     return (
-        isDevice(obj) as boolean &&
-        typeof obj.expiryDate === "string"
+        (obj !== null &&
+            typeof obj === "object" ||
+            typeof obj === "function") &&
+        typeof obj.deviceId === "string" &&
+        typeof obj.name === "string" &&
+        typeof obj.publicKey === "string" &&
+        (typeof obj.expiryDate === "undefined" ||
+            typeof obj.expiryDate === "string")
     )
 }
 

@@ -70,9 +70,12 @@ export type Device = {
  * 
  * @see {isPairEvent} ts-auto-guard:type-guard
  */
-export interface PairEvent extends Device {
-	/// Timestamp of expiration date (ISO string)
-	expiryDate: string
+export interface PairEvent extends Required<Device> {
+	/**
+	 * Timestamp of expiration date (ISO string)
+	 * (accepting the request doesn't need the expiry date)
+	 */
+	expiryDate?: string
 };
 
 /**
