@@ -38,9 +38,9 @@ export const newDeviceListState = selector({
 
 		// filter out paired devices
 		return onlineDevices.filter(device => (
-			pairedDevices.findIndex(({ deviceId }) => {
+			pairedDevices.findIndex(({ deviceId }) => (
 				device.deviceId === deviceId
-			}) === -1
+			)) === -1
 		));
 	}
 });
