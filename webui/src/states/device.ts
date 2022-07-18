@@ -45,7 +45,7 @@ export const newDeviceListState = selector({
 	}
 });
 
-export const incomingRequestListState = atom<Required<PairEvent>[]>({
+export const incomingRequestListState = atom<PairEvent[]>({
 	key: "incomingRequestList",
 	default: [],
 	effects: [

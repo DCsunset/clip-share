@@ -1,36 +1,55 @@
-import { Snackbar, Typography } from "@mui/material";
+import { Button, Snackbar, Typography } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
 import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
-import { Device, PairEvent } from "../types/server";
-import { hasDevice } from "../utils/device";
+import { PairEvent } from "../types/server";
+import { displayId, hasDevice } from "../utils/device";
+import { DateTime } from "luxon";
 
 function DevicePairing() {
 	const setNotification = useSetRecoilState(notificationState);
 	const config = useRecoilValue(configState);
   const [incomingRequests, setIncomingRequests] = useRecoilState(incomingRequestListState);
-  const [outgoingRequests, setOutgoingRequests] = useRecoilState(outgoingRequestListState);
-	const [pairedDevices, setPairedDevices] = useRecoilState(pairedDeviceListState);
+  const outgoingRequests = useRecoilValue(outgoingRequestListState);
+	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	// Show one event at a time
 	const [currentEvent, setCurrentEvent] = useState<PairEvent | null>(null);
 	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const socket = useContext(SocketCtx);
 
-	// Update notification on change
+	// Update current event on change
 	useEffect(() => {
-		const currentDevice = incomingRequests[0];
-		if (incomingRequests.length) {
-			if (hasDevice(outgoingRequests, currentDevice)) {
-				// successfully paired
-				setPairedDevices(prev => addPairedDevice(prev, currentDevice));
+		if (incomingRequests.length === 0) {
+			return;
+		}
+
+		const event = incomingRequests[0];
+		if (event.expiryDate) {
+			const exp = DateTime.fromISO(event.expiryDate);
+			if (exp < DateTime.local()) {
+				// expired
+				setIncomingRequests(prev => prev.slice(1));
+				return;
 			}
 		}
 
-		if (incomingRequests.length && !currentEvent) {
-			setCurrentEvent(currentDevice);
-			// remove the first event
+		if (hasDevice(outgoingRequests, event)) {
+			// successfully paired
+			setPairedDevices(prev => addPairedDevice(prev, event));
+			// remove the current event
+			setIncomingRequests(prev => prev.slice(1));
+			setNotification({
+				color: "success",
+				message: `Device ${event.name} paired successfully`
+			})
+			return;
+		}
+
+		if (!currentEvent) {
+			setCurrentEvent(event);
+			// remove the current event
 			setIncomingRequests(prev => prev.slice(1));
 			setSnackbarOpen(true);
 		}
@@ -48,7 +67,7 @@ function DevicePairing() {
 		setCurrentEvent(null);
 	};
 
-	const acceptPairing = (device: Required<PairEvent>) => {
+	const acceptPairing = (device: PairEvent) => {
 		if (socket === null) {
 			setNotification({
 				color: "error",
@@ -60,21 +79,6 @@ function DevicePairing() {
 		// successfully paired
 		setPairedDevices(prev => addPairedDevice(prev, device));
 		// acknowledge back
-		socket.emit("pair", {
-			...device,
-			publicKey: config.localDevice!.publicKey
-		} as PairEvent);
-	};
-
-	const startPairing = (device: Device) => {
-		if (socket === null) {
-			setNotification({
-				color: "error",
-				message: "Connection not established"
-			});
-			return;
-		}
-		// Send pair request
 		socket.emit("pair", {
 			...device,
 			publicKey: config.localDevice!.publicKey
@@ -97,7 +101,23 @@ function DevicePairing() {
 				<Typography>
 					Pairing Request
 				</Typography>
-				Device {currentEvent?.name} ({currentEvent?.deviceId.substring(0, 17)})
+				Device {currentEvent?.name} ({displayId(currentEvent?.deviceId)})
+				<div>
+					<Button
+						variant="contained"
+						color="primary"
+						onClick={() => acceptPairing(currentEvent!)}
+					>
+						Accept
+					</Button>
+					<Button
+						variant="contained"
+						color="error"
+						onClick={handleSnackbarClose}
+					>
+						Reject
+					</Button>
+				</div>
 			</>
 		</Snackbar>
 	);

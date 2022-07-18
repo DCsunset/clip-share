@@ -12,6 +12,8 @@ export type Config = {
 	serverUrl: string,
 	reconnectionDelayMax: number,
 	fetchingInterval: number,
+	/// timeout in seconds
+	pairingTimeout: number
 };
 
 export const configState = atom<Config>({
@@ -27,6 +29,7 @@ export async function initConfig(): Promise<Config> {
 		serverUrl: "",
 		reconnectionDelayMax: 5000,
 		fetchingInterval: 3000,
+		pairingTimeout: 600
 	};
 }
 

@@ -9,7 +9,7 @@ import Layout from './components/Layout';
 import { generateChallenge } from './utils/crypto';
 import { AuthRequest, ErrEvent, PairEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
   incomingRequestListState,
@@ -79,7 +79,8 @@ function App() {
       setOnlineDevices(data);
     });
     
-    socket.on("pair", (e: Required<PairEvent>) => {
+    socket.on("pair", (e: PairEvent) => {
+      console.log("Pair event", e);
       // Use updater form because incomingRequests is not a dependency
       setIncomingRequests(prev => {
         if (prev.findIndex(v => v.deviceId === e.deviceId) !== -1) {
