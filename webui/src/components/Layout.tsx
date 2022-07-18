@@ -81,6 +81,7 @@ function Layout(props: Props) {
 						Clip Share
 					</Typography>
 
+					{/* spacer */}
 					<span style={{ flexGrow: 1 }} />
 
 					<Box title={socketStatus} sx={{

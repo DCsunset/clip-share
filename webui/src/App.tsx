@@ -80,7 +80,6 @@ function App() {
     });
     
     socket.on("pair", (e: PairEvent) => {
-      console.log("Pair event", e);
       // Use updater form because incomingRequests is not a dependency
       setIncomingRequests(prev => {
         if (prev.findIndex(v => v.deviceId === e.deviceId) !== -1) {

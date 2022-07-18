@@ -1,4 +1,4 @@
-import { Button, Snackbar, Typography } from "@mui/material";
+import { Button, Card, CardActions, CardContent, Snackbar, Box } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
@@ -7,6 +7,8 @@ import { configState } from "../states/config.js";
 import { PairEvent } from "../types/server";
 import { displayId, hasDevice } from "../utils/device";
 import { DateTime } from "luxon";
+import Icon from "@mdi/react";
+import { mdiSwapHorizontal } from "@mdi/js";
 
 function DevicePairing() {
 	const setNotification = useSetRecoilState(notificationState);
@@ -97,28 +99,38 @@ function DevicePairing() {
 			}}
 			open={snackbarOpen}
 		>
-			<>
-				<Typography>
-					Pairing Request
-				</Typography>
-				Device {currentEvent?.name} ({displayId(currentEvent?.deviceId)})
-				<div>
+			<Card sx={{ p: 0.6 }}>
+				<CardContent sx={{ pb: 0.6, pt: 1 }}>
+					<Box sx={{
+						fontSize: "1.15rem",
+						fontWeight: 500,
+						pb: 1,
+						display: "flex"
+					}}>
+						<Box sx={{ mt: 0.2, mr: 0.6 }}>
+							<Icon path={mdiSwapHorizontal} size={1}></Icon>
+						</Box>
+						Pairing Request
+					</Box>
+					{currentEvent?.name} ({displayId(currentEvent?.deviceId)})
+				</CardContent>
+				<CardActions sx={{
+					justifyContent: "flex-end"
+				}}>
 					<Button
-						variant="contained"
-						color="primary"
-						onClick={() => acceptPairing(currentEvent!)}
-					>
-						Accept
-					</Button>
-					<Button
-						variant="contained"
 						color="error"
 						onClick={handleSnackbarClose}
 					>
 						Reject
 					</Button>
-				</div>
-			</>
+					<Button
+						color="success"
+						onClick={() => acceptPairing(currentEvent!)}
+					>
+						Accept
+					</Button>
+				</CardActions>
+			</Card>
 		</Snackbar>
 	);
 }
