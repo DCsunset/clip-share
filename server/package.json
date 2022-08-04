@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run type-guard && tsc",
     "dev": "CONFIG_PATH=./test/config.json ts-node src/server.ts",
     "type-guard": "ts-auto-guard src/types.ts",
     "start": "NODE_ENV=production node dist/server.js"
