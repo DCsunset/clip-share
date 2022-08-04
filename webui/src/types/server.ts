@@ -79,6 +79,16 @@ export interface PairEvent extends Required<Device> {
 };
 
 /**
+ * Unpair Event
+ * 
+ * @see {isUnpairEvent} ts-auto-guard:type-guard
+ */
+export interface UnpairEvent {
+	deviceId: string,
+	name: string
+};
+
+/**
  * Event to share data
  * (request and response share the same type)
  * 

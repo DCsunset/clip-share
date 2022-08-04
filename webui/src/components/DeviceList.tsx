@@ -13,13 +13,13 @@ import {
   Typography
 } from '@mui/material';
 import {
-	mdiChevronDown, mdiLaptop, mdiLinkVariant, mdiPlus
+	mdiChevronDown, mdiLaptop, mdiLinkVariant, mdiMinus, mdiPlus
 } from "@mdi/js";
 import { DeviceType } from '../types/app';
-import { Device, PairEvent } from "../types/server";
+import { Device, PairEvent, UnpairEvent } from "../types/server";
 import { displayId } from "../utils/device";
 import { SocketCtx, notificationState } from "../states/app.js";
-import { outgoingRequestListState } from "../states/device.js";
+import { outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
 import { configState } from "../states/config.js";
 
 function capitalize(str: string) {
@@ -37,6 +37,7 @@ function DeviceList(props: Props) {
 	const setNotification = useSetRecoilState(notificationState);
 	const config = useRecoilValue(configState);
 	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
+	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
@@ -64,6 +65,28 @@ function DeviceList(props: Props) {
 		setNotification({
 			color: "info",
 			message: `Pair request sent to device ${event.name}`
+		});
+	};
+
+	const unpair = (device: Device) => {
+		if (socket === null) {
+			setNotification({
+				color: "error",
+				message: "Connection not established"
+			});
+			return;
+		}
+
+		const event: UnpairEvent = {
+			deviceId: device.deviceId,
+			name: device.name
+		};
+		socket.emit("unpair", event);
+		setPairedDevices(prev => removePairedDevice(prev, device));
+
+		setNotification({
+			color: "info",
+			message: `Device ${event.name} unpaired`
 		});
 	};
 
@@ -127,13 +150,25 @@ function DeviceList(props: Props) {
 									({displayId(device.deviceId)})
 								</Box>
 								<span style={{ flexGrow: 1 }} />
-								<IconButton
-									size="small"
-									title="Pair"
-									onClick={() => startPairing(device)}
-								>
-									<Icon path={mdiPlus} size={1} />
-								</IconButton>
+								{
+									props.type === "new" ? (
+										<IconButton
+											size="small"
+											title="Pair"
+											onClick={() => startPairing(device)}
+										>
+											<Icon path={mdiPlus} size={1} />
+										</IconButton>
+									) : (
+										<IconButton
+											size="small"
+											title="Unpair"
+											onClick={() => unpair(device)}
+										>
+											<Icon path={mdiMinus} size={1} />
+										</IconButton>
+									)
+								}
 							</ListItem>
 						))}
 					</List>

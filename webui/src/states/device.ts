@@ -25,7 +25,7 @@ export function addPairedDevice(pairedDeviceList: Required<Device>[], device: Re
 }
 
 /// Remove device from paired device list and returns the new list
-export function removePairedDevice(pairedDeviceList: Required<Device>[], device: Required<Device>) {
+export function removePairedDevice(pairedDeviceList: Required<Device>[], device: Device) {
 	return pairedDeviceList.filter(d => d.deviceId !== device.deviceId);
 }
 
