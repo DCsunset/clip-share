@@ -10,12 +10,14 @@ import {
 	EventError,
 	PairEvent,
 	ShareEvent,
+	UnpairEvent,
 } from "./types";
 import {
 	isAuthRequest,
 	isDevice,
 	isPairEvent,
 	isShareEvent,
+	isUnpairEvent,
 } from "./types.guard";
 import { readConfig } from "./config";
 import { getFingerprint, verifyChallenge } from "./utils/crypto";
@@ -28,6 +30,7 @@ function newErrEvent(code: ErrCode, device?: Device): ErrEvent {
 const config = readConfig();
 // Buffer unsent data (wait until device online)
 // Map<fingerprint, buffer>
+// TODO: add expiry data to release memory
 const buffer: Map<string, DataBuffer> = new Map();
 
 function addToBuffer(fromDevice: string, toDevice: string, data: ShareEvent["data"]) {
@@ -152,6 +155,32 @@ io.on("connection", async socket => {
 				name,
 				publicKey: otherDevice.publicKey,
 				expiryDate: event.expiryDate
+			} as Required<PairEvent>);
+		});
+
+		socket.on("unpair", data => {
+			if (!isUnpairEvent(data)) {
+				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
+				return;
+			}
+
+			const event = data as UnpairEvent;
+			if (!onlineDevices.has(event.deviceId)) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, event));
+				return;
+			}
+
+			// Info of the other devices
+			const otherDevice = onlineDevices.get(event.deviceId)!;
+			if (otherDevice.name != event.name) {
+				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, event));
+				return;
+			}
+
+			// Send sender's info to receiver
+			io.to(otherDevice.socketId).emit("unpair", {
+				deviceId,
+				name
 			} as Required<PairEvent>);
 		});
 		
