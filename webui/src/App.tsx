@@ -115,20 +115,6 @@ function App() {
     }
   }, [config])
 
-  // Fetching device list
-  useEffect(() => {
-    if (socket === null) {
-      return;
-    }
-
-    // fetch immediately
-    socket.emit("list");
-    const id = setInterval(() => {
-      socket.emit("list");
-    }, config.fetchingInterval);
-    return () => clearInterval(id);
-  }, [socket, config]);
-
   return (
     <SocketCtx.Provider value={socket}>
       <Layout>

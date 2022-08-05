@@ -29,7 +29,6 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(config.serverUrl);
 	const [deviceName, setDeviceName] = useState(config.localDevice?.name ?? "Unnamed");
 	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(config.reconnectionDelayMax.toString());
-	const [fetchingInterval, setFetchingInterval] = useState(config.fetchingInterval.toString());
 
 	const validNumber = (s: string) => {
 		const num = parseInt(s);
@@ -38,10 +37,8 @@ function SettingsDialog(props: Props) {
 
 	const validName = () => deviceName.length > 0;
 	const validReconnectionDelayMax = () => validNumber(reconnectionDelayMax);
-	const validFetchingInterval = () => validNumber(fetchingInterval);
 	const validSettings = () => validName()
-		&& validReconnectionDelayMax()
-		&& validFetchingInterval();
+		&& validReconnectionDelayMax();
 
 	useEffect(() => {
 		// Init device if empty
@@ -106,7 +103,6 @@ function SettingsDialog(props: Props) {
 		setServerUrl(config.serverUrl);
 		setDeviceName(config.localDevice?.name ?? "");
 		setReconnectionDelayMax(config.reconnectionDelayMax.toString());
-		setFetchingInterval(config.fetchingInterval.toString());
 	};
 	
 	// styles for required fields
@@ -204,25 +200,6 @@ function SettingsDialog(props: Props) {
 							}}
 							value={reconnectionDelayMax}
 							onChange={event => setReconnectionDelayMax(event.target.value)}
-							{...requiredProps}
-						/>
-					</Grid>
-				</Grid>
-				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
-					<Grid item>
-						<ListItemText secondary="Interval for fetching device list (in ms)">
-							Fetching Interval
-						</ListItemText>
-					</Grid>
-					<Grid item display="inline-flex" alignItems="center">
-						<TextField
-							error={!validFetchingInterval()}
-							variant="standard"
-							style={{
-								maxWidth: "85px"
-							}}
-							value={fetchingInterval}
-							onChange={event => setFetchingInterval(event.target.value)}
 							{...requiredProps}
 						/>
 					</Grid>

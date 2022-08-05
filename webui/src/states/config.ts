@@ -11,7 +11,6 @@ export type Config = {
 	localDevice: LocalDevice,
 	serverUrl: string,
 	reconnectionDelayMax: number,
-	fetchingInterval: number,
 	/// timeout in seconds
 	pairingTimeout: number
 };
@@ -28,7 +27,6 @@ export async function initConfig(): Promise<Config> {
 		localDevice: await initDevice(),
 		serverUrl: "",
 		reconnectionDelayMax: 5000,
-		fetchingInterval: 3000,
 		pairingTimeout: 600
 	};
 }
