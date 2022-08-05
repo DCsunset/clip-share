@@ -4,16 +4,18 @@ import Icon from '@mdi/react';
 import { DateTime } from "luxon";
 import {
 	Box,
+	Button,
 	Card,
-  CardContent,
-  Collapse,
-  IconButton,
-  List,
-  ListItem,
-  Typography
+	CardContent,
+	Collapse,
+	IconButton,
+	List,
+	ListItem,
+	Typography
 } from '@mui/material';
 import {
-	mdiChevronDown, mdiLaptop, mdiLinkVariant, mdiMinus, mdiPlus
+	mdiArrowRightBottom,
+	mdiChevronDown, mdiContentCopy, mdiLaptop, mdiLinkVariant, mdiMinus, mdiPlus, mdiSend
 } from "@mdi/js";
 import { DeviceType } from '../types/app';
 import { Device, PairEvent, UnpairEvent } from "../types/server";
@@ -38,7 +40,7 @@ function DeviceList(props: Props) {
 	const config = useRecoilValue(configState);
 	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
-	
+
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
 	const startPairing = (device: Device) => {
@@ -90,6 +92,106 @@ function DeviceList(props: Props) {
 		});
 	};
 
+	const NewDevice = ({ device }: { device: Device }) => (
+		<>
+			<span>{device.name}</span>
+			<Box sx={{
+				opacity: 0.75,
+				ml: 1
+			}}>
+				({displayId(device.deviceId)})
+			</Box>
+			<span style={{ flexGrow: 1 }} />
+			<IconButton
+				size="small"
+				title="Pair"
+				onClick={() => startPairing(device)}
+			>
+				<Icon path={mdiPlus} size={1} />
+			</IconButton>
+		</>
+	);
+
+	const PairedDevice = ({ device }: { device: Device }) => (
+		<Box>
+			<Box sx={{
+				display: "flex",
+				alignItems: "center"
+			}}>
+				<span>{device.name}</span>
+				<Box sx={{
+					opacity: 0.75,
+					ml: 1
+				}}>
+					({displayId(device.deviceId)})
+				</Box>
+				<span style={{ flexGrow: 1 }} />
+				<IconButton
+					size="small"
+					title="Unpair"
+					onClick={() => unpair(device)}
+				>
+					<Icon path={mdiMinus} size={1} />
+				</IconButton>
+			</Box>
+
+			<Box sx={{
+				display: "flex",
+				alignItems: "center",
+				opacity: 0.95,
+			}}>
+				<Box sx={{
+					opacity: 0.5,
+					mr: 1.2
+				}}>
+					<Icon path={mdiArrowRightBottom} size={1} />
+				</Box>
+				<Button
+					sx={{ mr: 0.5 }}
+					color="inherit"
+					title="Send Text"
+				>
+					<Box sx={{
+						display: "flex",
+						alignItems: "center",
+						mr: 0.5
+					}}>
+						<Icon path={mdiSend} size={0.7} />
+					</Box>
+					Text
+				</Button>
+				<Button
+					sx={{ mr: 0.5 }}
+					color="inherit"
+					title="Send clipboard content"
+				>
+					<Box sx={{
+						display: "flex",
+						alignItems: "center",
+						mr: 0.5
+					}}>
+						<Icon path={mdiSend} size={0.7} />
+					</Box>
+					Paste
+				</Button>
+				<Button
+					sx={{ mr: 0.5 }}
+					color="inherit"
+					title="Copy received content"
+				>
+					<Box sx={{
+						display: "flex",
+						alignItems: "center",
+						mr: 0.5
+					}}>
+						<Icon path={mdiContentCopy} size={0.7} />
+					</Box>
+					Copy
+				</Button>
+			</Box>
+		</Box>
+	);
+
 	return (
 		<Card>
 			<CardContent sx={{
@@ -115,9 +217,9 @@ function DeviceList(props: Props) {
 					>
 						{capitalize(props.type)} Devices
 					</Typography>
-					
+
 					<span style={{ flexGrow: 1 }} />
-					
+
 					<IconButton
 						disableRipple
 						sx={{ p: 0 }}
@@ -126,7 +228,7 @@ function DeviceList(props: Props) {
 						<Icon
 							path={mdiChevronDown}
 							style={{
-								transform: `rotate(${visible? "0" : "-180deg"})`,
+								transform: `rotate(${visible ? "0" : "-180deg"})`,
 								transition: "all 0.2s"
 							}}
 							size={1}
@@ -134,7 +236,7 @@ function DeviceList(props: Props) {
 					</IconButton>
 				</Box>
 				<hr />
-				
+
 				<Collapse in={visible}>
 					<List sx={{ py: 0 }}>
 						{props.devices.map(device => (
@@ -142,31 +244,11 @@ function DeviceList(props: Props) {
 								key={device.deviceId}
 								sx={{ px: 1 }}
 							>
-								<span>{device.name}</span>
-								<Box sx={{
-									opacity: 0.75,
-									ml: 1
-								}}>
-									({displayId(device.deviceId)})
-								</Box>
-								<span style={{ flexGrow: 1 }} />
 								{
 									props.type === "new" ? (
-										<IconButton
-											size="small"
-											title="Pair"
-											onClick={() => startPairing(device)}
-										>
-											<Icon path={mdiPlus} size={1} />
-										</IconButton>
+										<NewDevice device={device} />
 									) : (
-										<IconButton
-											size="small"
-											title="Unpair"
-											onClick={() => unpair(device)}
-										>
-											<Icon path={mdiMinus} size={1} />
-										</IconButton>
+										<PairedDevice device={device} />
 									)
 								}
 							</ListItem>
