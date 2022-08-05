@@ -14,7 +14,6 @@ import {
 } from "./types";
 import {
 	isAuthRequest,
-	isDevice,
 	isPairEvent,
 	isShareEvent,
 	isUnpairEvent,
@@ -55,6 +54,14 @@ function addToBuffer(fromDevice: string, toDevice: string, data: ShareEvent["dat
 const onlineDevices = new Map<string, DeviceState>();
 // Map connections to device id
 const connectionMap = new Map<string, string>();
+
+function getOnlineDevices() {
+	return Array.from(onlineDevices.entries())
+		.map(([id, info]) => ({
+			deviceId: id,
+			name: info.name,
+		}));
+}
 
 const io = new Server({
 	// websocket only
@@ -118,15 +125,9 @@ io.on("connection", async socket => {
 			}
 		}
 
-		// List request
+		// List request (manually refresh)
 		socket.on("list", () => {
-			const devices = Array.from(onlineDevices.entries())
-				.map(([id, info]) => ({
-					deviceId: id,
-					name: info.name,
-				}))
-				.filter(({ deviceId: id }) => id !== deviceId);
-			socket.emit("list", devices);
+			socket.emit("list", getOnlineDevices());
 		});
 		
 		// Pair device
@@ -204,6 +205,11 @@ io.on("connection", async socket => {
 				} as ShareEvent);
 			}
 		});
+
+		// Send updated device list to every connected device
+		for (const { socketId } of onlineDevices.values()) {
+			io.to(socketId).emit("list", getOnlineDevices());
+		}
 	}
 	catch (err) {
 		if (err instanceof EventError) {
