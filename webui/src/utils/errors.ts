@@ -1,5 +1,4 @@
 import { ErrCode, ErrEvent } from "../types/server";
-import { displayId } from "./device";
 
 export function errorToString(err: ErrEvent) {
 	switch (err.code) {
@@ -13,11 +12,11 @@ export function errorToString(err: ErrEvent) {
 			return "current device already online";
 		case ErrCode.DeviceOffline: {
 			const { name, deviceId } = err.device!;
-			return `device ${name} (${displayId(deviceId)}) not online`;
+			return `device ${name} (${deviceId}) not online`;
 		}
 		case ErrCode.DeviceNameMismatched: {
 			const { name, deviceId } = err.device!;
-			return `device name ${name} mismatched ${displayId(deviceId)})`;
+			return `device name ${name} mismatched (${deviceId})`;
 		}
 		case ErrCode.InternalError:
 			return "internal server error";

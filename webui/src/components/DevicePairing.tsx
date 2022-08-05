@@ -5,7 +5,7 @@ import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pa
 import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
 import { PairEvent } from "../types/server";
-import { displayId, hasDevice } from "../utils/device";
+import { hasDevice } from "../utils/device";
 import { DateTime } from "luxon";
 import Icon from "@mdi/react";
 import { mdiSwapHorizontal } from "@mdi/js";
@@ -112,7 +112,7 @@ function DevicePairing() {
 						</Box>
 						Pairing Request
 					</Box>
-					{currentEvent?.name} ({displayId(currentEvent?.deviceId)})
+					{currentEvent?.name} ({currentEvent?.deviceId})
 				</CardContent>
 				<CardActions sx={{
 					justifyContent: "flex-end"

@@ -19,7 +19,6 @@ import {
 } from "@mdi/js";
 import { DeviceType } from '../types/app';
 import { Device, PairEvent, UnpairEvent } from "../types/server";
-import { displayId } from "../utils/device";
 import { SocketCtx, notificationState } from "../states/app.js";
 import { outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
 import { configState } from "../states/config.js";
@@ -99,7 +98,7 @@ function DeviceList(props: Props) {
 				opacity: 0.75,
 				ml: 1
 			}}>
-				({displayId(device.deviceId)})
+				({device.deviceId})
 			</Box>
 			<span style={{ flexGrow: 1 }} />
 			<IconButton
@@ -113,7 +112,7 @@ function DeviceList(props: Props) {
 	);
 
 	const PairedDevice = ({ device }: { device: Device }) => (
-		<Box>
+		<Box sx={{ width: "100%" }}>
 			<Box sx={{
 				display: "flex",
 				alignItems: "center"
@@ -123,7 +122,7 @@ function DeviceList(props: Props) {
 					opacity: 0.75,
 					ml: 1
 				}}>
-					({displayId(device.deviceId)})
+					({device.deviceId})
 				</Box>
 				<span style={{ flexGrow: 1 }} />
 				<IconButton
