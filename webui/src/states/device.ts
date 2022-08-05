@@ -2,6 +2,7 @@ import { Device, PairEvent } from "../types/server";
 import { atom, selector } from "recoil";
 import { hasDevice } from "../utils/device";
 import { localStorageEffect } from "./effects";
+import { configState } from "./config.js";
 
 export const onlineDeviceListState = atom<Device[]>({
 	key: "OnlineDeviceList",
@@ -35,12 +36,14 @@ export const newDeviceListState = selector({
 	get: ({ get }) => {
 		const onlineDevices = get(onlineDeviceListState);
 		const pairedDevices = get(pairedDeviceListState);
+		const config = get(configState);
 
-		// filter out paired devices
+		// filter out paired devices and local device
 		return onlineDevices.filter(device => (
 			pairedDevices.findIndex(({ deviceId }) => (
 				device.deviceId === deviceId
 			)) === -1
+				&& device.deviceId !== config.localDevice.deviceId
 		));
 	}
 });
