@@ -8,6 +8,7 @@ export async function getFingerprint(armoredPublicKey: string) {
 	// fingerprint is human-readable format
 	return publicKey.getFingerprint()
 		.match(/.{1,2}/g)!
+		.slice(0, 6)
 		.join(":");
 };
 
