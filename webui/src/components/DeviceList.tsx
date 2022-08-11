@@ -210,7 +210,8 @@ function DeviceList(props: Props) {
 				<Button
 					sx={{ mr: 0.5 }}
 					color="inherit"
-					title="Copy received content"
+					title="Copy received clip"
+					onClick={() => copyClip(device)}
 				>
 					<Box sx={{
 						display: "flex",

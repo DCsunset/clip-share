@@ -85,6 +85,8 @@ function DevicePairing() {
 			...device,
 			publicKey: config.localDevice!.publicKey
 		} as PairEvent);
+		
+		setSnackbarOpen(false);
 	};
 
 	return (
