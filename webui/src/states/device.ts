@@ -56,10 +56,33 @@ export const incomingRequestListState = atom<PairEvent[]>({
 	]
 });
 
-export const outgoingRequestListState= atom<PairEvent[]>({
+export const outgoingRequestListState = atom<PairEvent[]>({
 	key: "outgoingRequestList",
 	default: [],
 	effects: [
 		localStorageEffect("outgoingRequestList")
 	]
 });
+
+export type DeviceData = {
+	[id: string]: {
+		/// Received clip
+		clip: string
+	} | undefined
+};
+
+export const deviceDataState = atom<DeviceData>({
+	key: "deviceData",
+	default: {}
+});
+
+export const setDeviceClip = (deviceData: DeviceData, deviceId: string, clip: string) => {
+	const data = deviceData[deviceId];
+	return {
+		...deviceData,
+		[deviceId]: {
+			...data,
+			clip
+		}
+	};
+};

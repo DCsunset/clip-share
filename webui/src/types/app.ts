@@ -5,4 +5,3 @@ export type NavigationItem = {
 };
 
 export type DeviceType = "paired" | "new";
-

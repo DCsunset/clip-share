@@ -7,15 +7,17 @@ import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import { generateChallenge } from './utils/crypto';
-import { AuthRequest, ErrEvent, PairEvent } from './types/server';
+import { AuthRequest, ErrEvent, PairEvent, ShareEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
+  deviceDataState,
   incomingRequestListState,
   newDeviceListState,
   onlineDeviceListState,
-  pairedDeviceListState
+  pairedDeviceListState,
+  setDeviceClip
 } from './states/device';
 import { notificationState, SocketCtx, socketStatusState } from './states/app';
 import { errorToString } from './utils/errors';
@@ -28,6 +30,7 @@ function App() {
   const setNotification = useSetRecoilState(notificationState);
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
   const setIncomingRequests = useSetRecoilState(incomingRequestListState);
+  const setDeviceData = useSetRecoilState(deviceDataState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -88,6 +91,21 @@ function App() {
         return [ ...prev, e ];
       });
     });
+
+    socket.on("share", (e: ShareEvent) => {
+      // TODO: e2ee
+      const { type, content } = e.data;
+      switch (type) {
+        case "clipboard":
+          setDeviceData(prev => setDeviceClip(prev, e.deviceId, content));
+          break;
+        default:
+          setNotification({
+            color: "error",
+            message: `Share type ${type} not implemented`
+          });
+      }
+    })
 
     return socket;
   }

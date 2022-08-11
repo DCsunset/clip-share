@@ -18,9 +18,9 @@ import {
 	mdiChevronDown, mdiContentCopy, mdiLaptop, mdiLinkVariant, mdiMinus, mdiPlus, mdiSend
 } from "@mdi/js";
 import { DeviceType } from '../types/app';
-import { Device, PairEvent, UnpairEvent } from "../types/server";
+import { Device, PairEvent, ShareEvent, UnpairEvent } from "../types/server";
 import { SocketCtx, notificationState } from "../states/app.js";
-import { outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
+import { deviceDataState, outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
 import { configState } from "../states/config.js";
 
 function capitalize(str: string) {
@@ -39,8 +39,41 @@ function DeviceList(props: Props) {
 	const config = useRecoilValue(configState);
 	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
+	const deviceData = useRecoilValue(deviceDataState);
 
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
+
+	const sendClip = (device: Device, content: string) => {
+		if (socket === null) {
+			setNotification({
+				color: "error",
+				message: "Connection not established"
+			});
+			return;
+		}
+
+		const shareEvent: ShareEvent = {
+			deviceId: device.deviceId,
+			data: {
+				type: "clipboard",
+				content
+			}
+		};
+
+		socket.emit("share", shareEvent);
+		setNotification({
+			color: "info",
+			message: `Content sent to device ${device.name}`
+		});
+	};
+
+	const copyClip = (device: Device) => {
+		const clip = deviceData[device.deviceId]?.clip;
+		setNotification({
+			color: "info",
+			message: `Clip received: ${clip}`
+		});
+	};
 
 	const startPairing = (device: Device) => {
 		if (socket === null) {
@@ -163,6 +196,7 @@ function DeviceList(props: Props) {
 					sx={{ mr: 0.5 }}
 					color="inherit"
 					title="Send clipboard content"
+					onClick={() => sendClip(device, "test")}
 				>
 					<Box sx={{
 						display: "flex",
