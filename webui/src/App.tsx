@@ -7,9 +7,9 @@ import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
 import { decrypt, generateChallenge } from './utils/crypto';
-import { AuthRequest, ErrEvent, PairEvent, ShareEvent } from './types/server';
+import { AuthRequest, ErrEvent, PairEvent, ShareEvent, UnpairEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { configState } from './states/config';
 import {
   deviceDataState,
@@ -21,11 +21,12 @@ import {
 } from './states/device';
 import { notificationState, SocketCtx, socketStatusState } from './states/app';
 import { errorToString } from './utils/errors';
+import { removeDevice } from "./utils/device.js";
 
 function App() {
   const config = useRecoilValue(configState);
   const newDevices = useRecoilValue(newDeviceListState);
-  const pairedDevices = useRecoilValue(pairedDeviceListState);
+  const [pairedDevices, setPairedDevices] = useRecoilState(pairedDeviceListState);
   const setSocketStatus = useSetRecoilState(socketStatusState);
   const setNotification = useSetRecoilState(notificationState);
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
@@ -89,6 +90,14 @@ function App() {
           return prev;
         }
         return [ ...prev, e ];
+      });
+    });
+
+    socket.on("unpair", (e: UnpairEvent) => {
+      setPairedDevices(prev => removeDevice(prev, e));
+      setNotification({
+        color: "info",
+        message: `Device ${e.name} unpaired`
       });
     });
 

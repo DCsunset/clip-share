@@ -14,6 +14,6 @@ export function addDevice<T extends Device>(deviceList: T[], device: T) {
 }
 
 /// Remove device from a list (return a new list)
-export function removeDevice<T extends Device>(deviceList: T[], device: T) {
+export function removeDevice<T extends Device>(deviceList: T[], device: Device) {
 	return deviceList.filter(d => d.deviceId !== device.deviceId);
 }
