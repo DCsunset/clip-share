@@ -13,8 +13,7 @@ export type Config = {
 export type DeviceState = {
 	name: string,
 	/// socket.io connection
-	socketId: string,
-	publicKey: string
+	socketId: string
 };
 
 /* Data type shared between devices

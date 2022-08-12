@@ -95,8 +95,7 @@ io.on("connection", async socket => {
 		connectionMap.set(socket.id, deviceId);
 		onlineDevices.set(deviceId, {
 			name,
-			socketId: socket.id,
-			publicKey
+			socketId: socket.id
 		});
 		console.log(`Device ${name} (${deviceId}) connects`);
 		
@@ -154,7 +153,7 @@ io.on("connection", async socket => {
 			io.to(otherDevice.socketId).emit("pair", {
 				deviceId,
 				name,
-				publicKey: otherDevice.publicKey,
+				publicKey: event.publicKey,
 				expiryDate: event.expiryDate
 			} as Required<PairEvent>);
 		});
