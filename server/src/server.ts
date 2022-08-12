@@ -181,7 +181,7 @@ io.on("connection", async socket => {
 			io.to(otherDevice.socketId).emit("unpair", {
 				deviceId,
 				name
-			} as Required<PairEvent>);
+			} as UnpairEvent);
 		});
 		
 		// Share data
