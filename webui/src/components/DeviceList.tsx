@@ -211,6 +211,7 @@ function DeviceList(props: Props) {
 					sx={{ mr: 0.5 }}
 					color="inherit"
 					title="Copy received clip"
+					disabled={!deviceData[device.deviceId]?.clip}
 					onClick={() => copyClip(device)}
 				>
 					<Box sx={{
