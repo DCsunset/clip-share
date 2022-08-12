@@ -22,6 +22,7 @@ import { Device, PairEvent, ShareEvent, UnpairEvent } from "../types/server";
 import { SocketCtx, notificationState } from "../states/app.js";
 import { deviceDataState, outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
 import { configState } from "../states/config.js";
+import { encrypt } from "../utils/crypto.js";
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
@@ -43,7 +44,7 @@ function DeviceList(props: Props) {
 
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
-	const sendClip = (device: Device, content: string) => {
+	const sendClip = async (device: Device, content: string) => {
 		if (socket === null) {
 			setNotification({
 				color: "error",
@@ -52,19 +53,29 @@ function DeviceList(props: Props) {
 			return;
 		}
 
-		const shareEvent: ShareEvent = {
-			deviceId: device.deviceId,
-			data: {
-				type: "clipboard",
-				content
-			}
-		};
+		try {
+			console.log(device)
+			const msg = await encrypt(content, device.publicKey!);
+			const shareEvent: ShareEvent = {
+				deviceId: device.deviceId,
+				data: {
+					type: "clipboard",
+					content: msg
+				}
+			};
 
-		socket.emit("share", shareEvent);
-		setNotification({
-			color: "info",
-			message: `Content sent to device ${device.name}`
-		});
+			socket.emit("share", shareEvent);
+			setNotification({
+				color: "info",
+				message: `Content sent to device ${device.name}`
+			});
+		}
+		catch (err: any) {
+			setNotification({
+				color: "error",
+				message: err.message
+			});
+		}
 	};
 
 	const copyClip = (device: Device) => {

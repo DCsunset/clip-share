@@ -37,3 +37,27 @@ export async function generateChallenge(armoredPrivateKey: string) {
 
 	return signedMessage;
 }
+
+export async function encrypt(text: string, armoredPublicKey: string) {
+	const publicKey = await openpgp.readKey({
+		armoredKey: armoredPublicKey
+	});
+	const msg = await openpgp.encrypt({
+		message: await openpgp.createMessage({ text }),
+		encryptionKeys: publicKey
+	});
+	return msg;
+}
+
+export async function decrypt(message: string, armoredPrivateKey: string) {
+	const privateKey = await openpgp.readPrivateKey({
+		armoredKey: armoredPrivateKey
+	});
+	const { data } = await openpgp.decrypt({
+		message: await openpgp.readMessage({
+			armoredMessage: message
+		}),
+		decryptionKeys: privateKey
+	});
+	return data;
+}

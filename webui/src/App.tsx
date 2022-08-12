@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
-import { generateChallenge } from './utils/crypto';
+import { decrypt, generateChallenge } from './utils/crypto';
 import { AuthRequest, ErrEvent, PairEvent, ShareEvent } from './types/server';
 import DevicePairing from './components/DevicePairing';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -92,20 +92,29 @@ function App() {
       });
     });
 
-    socket.on("share", (e: ShareEvent) => {
-      // TODO: e2ee
-      const { type, content } = e.data;
-      switch (type) {
-        case "clipboard":
-          setDeviceData(prev => setDeviceClip(prev, e.deviceId, content));
-          break;
-        default:
-          setNotification({
-            color: "error",
-            message: `Share type ${type} not implemented`
-          });
+    socket.on("share", async (e: ShareEvent) => {
+      try {
+        const { type, content } = e.data;
+        switch (type) {
+          case "clipboard":
+            console.log(config.localDevice)
+            const text = await decrypt(content, config.localDevice.privateKey);
+            setDeviceData(prev => setDeviceClip(prev, e.deviceId, text));
+            break;
+          default:
+            setNotification({
+              color: "error",
+              message: `Share type ${type} not implemented`
+            });
+        }
       }
-    })
+      catch (err: any) {
+        setNotification({
+          color: "error",
+          message: err.message
+        });
+      }
+    });
 
     return socket;
   }
