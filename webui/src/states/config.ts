@@ -10,6 +10,8 @@ export interface LocalDevice extends Required<Device> {
 export type Config = {
 	localDevice: LocalDevice,
 	serverUrl: string,
+	/// auto copy received clips into clipboard
+	autoCopy: boolean,
 	reconnectionDelayMax: number,
 	/// timeout in seconds
 	pairingTimeout: number
@@ -26,6 +28,7 @@ export async function initConfig(): Promise<Config> {
 	return {
 		localDevice: await initDevice(),
 		serverUrl: "",
+		autoCopy: true,
 		reconnectionDelayMax: 5000,
 		pairingTimeout: 600
 	};

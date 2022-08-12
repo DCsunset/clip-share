@@ -3,6 +3,7 @@ import Icon from "@mdi/react";
 import {
 	Box,
 	Button,
+	Checkbox,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -29,6 +30,7 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(config.serverUrl);
 	const [deviceName, setDeviceName] = useState(config.localDevice?.name ?? "Unnamed");
 	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(config.reconnectionDelayMax.toString());
+	const [autoCopy, setAutoCopy] = useState(config.autoCopy);
 
 	const validNumber = (s: string) => {
 		const num = parseInt(s);
@@ -103,6 +105,7 @@ function SettingsDialog(props: Props) {
 		setServerUrl(config.serverUrl);
 		setDeviceName(config.localDevice?.name ?? "");
 		setReconnectionDelayMax(config.reconnectionDelayMax.toString());
+		setAutoCopy(config.autoCopy);
 	};
 	
 	// styles for required fields
@@ -201,6 +204,20 @@ function SettingsDialog(props: Props) {
 							value={reconnectionDelayMax}
 							onChange={event => setReconnectionDelayMax(event.target.value)}
 							{...requiredProps}
+						/>
+					</Grid>
+				</Grid>
+
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Auto copy received clips into clipboard">
+							Auto Copy
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<Checkbox
+							checked={autoCopy}
+							onChange={e => setAutoCopy(e.target.checked)}
 						/>
 					</Grid>
 				</Grid>
