@@ -1,11 +1,11 @@
 import { Button, Card, CardActions, CardContent, Snackbar, Box } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { addPairedDevice, incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
+import { incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
 import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
 import { PairEvent } from "../types/server";
-import { hasDevice } from "../utils/device";
+import { addDevice, hasDevice, removeDevice } from "../utils/device";
 import { DateTime } from "luxon";
 import Icon from "@mdi/react";
 import { mdiSwapHorizontal } from "@mdi/js";
@@ -14,7 +14,7 @@ function DevicePairing() {
 	const setNotification = useSetRecoilState(notificationState);
 	const config = useRecoilValue(configState);
   const [incomingRequests, setIncomingRequests] = useRecoilState(incomingRequestListState);
-  const outgoingRequests = useRecoilValue(outgoingRequestListState);
+  const [outgoingRequests, setOutgoingRequests] = useRecoilState(outgoingRequestListState);
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	// Show one event at a time
 	const [currentEvent, setCurrentEvent] = useState<PairEvent | null>(null);
@@ -39,9 +39,11 @@ function DevicePairing() {
 
 		if (hasDevice(outgoingRequests, event)) {
 			// successfully paired
-			setPairedDevices(prev => addPairedDevice(prev, event));
+			setPairedDevices(prev => addDevice(prev, event));
 			// remove the current event
 			setIncomingRequests(prev => prev.slice(1));
+			// remove the outgoing event
+			setOutgoingRequests(prev => removeDevice(prev, event));
 			setNotification({
 				color: "success",
 				message: `Device ${event.name} paired successfully`
@@ -79,13 +81,13 @@ function DevicePairing() {
 		}
 
 		// successfully paired
-		setPairedDevices(prev => addPairedDevice(prev, device));
+		setPairedDevices(prev => addDevice(prev, device));
 		// acknowledge back
 		socket.emit("pair", {
 			...device,
 			publicKey: config.localDevice!.publicKey
 		} as PairEvent);
-		
+
 		setSnackbarOpen(false);
 	};
 

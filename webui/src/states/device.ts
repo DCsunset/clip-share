@@ -17,19 +17,6 @@ export const pairedDeviceListState = atom<Required<Device>[]>({
 	]
 });
 
-/// Add new device to paired device list and returns the new list
-export function addPairedDevice(pairedDeviceList: Required<Device>[], device: Required<Device>) {
-	if (hasDevice(pairedDeviceList, device)) {
-		return pairedDeviceList;
-	}
-	return [...pairedDeviceList, device];
-}
-
-/// Remove device from paired device list and returns the new list
-export function removePairedDevice(pairedDeviceList: Required<Device>[], device: Device) {
-	return pairedDeviceList.filter(d => d.deviceId !== device.deviceId);
-}
-
 /// Remove paired devices from device list
 export const newDeviceListState = selector({
 	key: "NewDeviceList",

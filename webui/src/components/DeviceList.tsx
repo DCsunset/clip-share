@@ -20,9 +20,10 @@ import {
 import { DeviceType } from '../types/app';
 import { Device, PairEvent, ShareEvent, UnpairEvent } from "../types/server";
 import { SocketCtx, notificationState } from "../states/app.js";
-import { deviceDataState, outgoingRequestListState, pairedDeviceListState, removePairedDevice } from "../states/device.js";
+import { deviceDataState, outgoingRequestListState, pairedDeviceListState } from "../states/device.js";
 import { configState } from "../states/config.js";
 import { encrypt } from "../utils/crypto.js";
+import { removeDevice } from "../utils/device.js";
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
@@ -54,7 +55,6 @@ function DeviceList(props: Props) {
 		}
 
 		try {
-			console.log(device)
 			const msg = await encrypt(content, device.publicKey!);
 			const shareEvent: ShareEvent = {
 				deviceId: device.deviceId,
@@ -113,7 +113,7 @@ function DeviceList(props: Props) {
 		});
 	};
 
-	const unpair = (device: Device) => {
+	const unpair = (device: Required<Device>) => {
 		if (socket === null) {
 			setNotification({
 				color: "error",
@@ -127,7 +127,7 @@ function DeviceList(props: Props) {
 			name: device.name
 		};
 		socket.emit("unpair", event);
-		setPairedDevices(prev => removePairedDevice(prev, device));
+		setPairedDevices(prev => removeDevice(prev, device));
 
 		setNotification({
 			color: "info",
@@ -155,7 +155,7 @@ function DeviceList(props: Props) {
 		</>
 	);
 
-	const PairedDevice = ({ device }: { device: Device }) => (
+	const PairedDevice = ({ device }: { device: Required<Device> }) => (
 		<Box sx={{ width: "100%" }}>
 			<Box sx={{
 				display: "flex",
@@ -294,7 +294,7 @@ function DeviceList(props: Props) {
 									props.type === "new" ? (
 										<NewDevice device={device} />
 									) : (
-										<PairedDevice device={device} />
+										<PairedDevice device={device as Required<Device>} />
 									)
 								}
 							</ListItem>

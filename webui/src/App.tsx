@@ -97,7 +97,6 @@ function App() {
         const { type, content } = e.data;
         switch (type) {
           case "clipboard":
-            console.log(config.localDevice)
             const text = await decrypt(content, config.localDevice.privateKey);
             setDeviceData(prev => setDeviceClip(prev, e.deviceId, text));
             break;
