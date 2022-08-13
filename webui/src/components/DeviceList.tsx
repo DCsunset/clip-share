@@ -78,12 +78,15 @@ function DeviceList(props: Props) {
 		}
 	};
 
-	const copyClip = (device: Device) => {
+	const copyClip = async (device: Device) => {
 		const clip = deviceData[device.deviceId]?.clip;
-		setNotification({
-			color: "info",
-			message: `Clip received: ${clip}`
-		});
+		if (clip) {
+			await navigator.clipboard.writeText(clip);
+			setNotification({
+				color: "info",
+				message: `Clip copied`
+			});
+		}
 	};
 
 	const startPairing = (device: Device) => {

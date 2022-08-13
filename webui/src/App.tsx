@@ -106,8 +106,11 @@ function App() {
         const { type, content } = e.data;
         switch (type) {
           case "clipboard":
-            const text = await decrypt(content, config.localDevice.privateKey);
-            setDeviceData(prev => setDeviceClip(prev, e.deviceId, text));
+            const clip = await decrypt(content, config.localDevice.privateKey);
+            setDeviceData(prev => setDeviceClip(prev, e.deviceId, clip));
+            if (config.autoCopy) {
+              await navigator.clipboard.writeText(clip);
+            }
             break;
           default:
             setNotification({
@@ -130,7 +133,6 @@ function App() {
   // connect to server when socket is null
   useEffect(() => {
     if (socket === null) {
-      console.log("[socket] Creating new socket...");
       connectToServer()
         .then(setSocket)
         .catch(err => {
