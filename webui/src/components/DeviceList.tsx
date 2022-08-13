@@ -11,6 +11,7 @@ import {
 	IconButton,
 	List,
 	ListItem,
+	Tooltip,
 	Typography
 } from '@mui/material';
 import {
@@ -42,6 +43,8 @@ function DeviceList(props: Props) {
 	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	const deviceData = useRecoilValue(deviceDataState);
+	const [copyTooltip, setCopyTooltip] = useState(false);
+	const [pasteTooltip, setPasteTooltip] = useState(false);
 
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
@@ -65,10 +68,10 @@ function DeviceList(props: Props) {
 			};
 
 			socket.emit("share", shareEvent);
-			setNotification({
-				color: "info",
-				message: `Content sent to device ${device.name}`
-			});
+			setPasteTooltip(true);
+			setTimeout(() => {
+				setPasteTooltip(false);
+			}, 3000);
 		}
 		catch (err: any) {
 			setNotification({
@@ -82,10 +85,10 @@ function DeviceList(props: Props) {
 		const clip = deviceData[device.deviceId]?.clip;
 		if (clip) {
 			await navigator.clipboard.writeText(clip);
-			setNotification({
-				color: "info",
-				message: `Clip copied`
-			});
+			setCopyTooltip(true);
+			setTimeout(() => {
+				setCopyTooltip(false);
+			}, 3000);
 		}
 	};
 
@@ -212,14 +215,28 @@ function DeviceList(props: Props) {
 					title="Send clipboard content"
 					onClick={() => sendClip(device, "test")}
 				>
-					<Box sx={{
-						display: "flex",
-						alignItems: "center",
-						mr: 0.5
-					}}>
-						<Icon path={mdiSend} size={0.7} />
-					</Box>
-					Paste
+					<Tooltip
+						sx={{ pb: 0 }}
+						disableFocusListener
+						disableHoverListener
+						disableTouchListener
+						placement="top"
+						arrow
+						open={pasteTooltip}
+						onClose={() => setPasteTooltip(false)}
+						title="Pasted"
+					>
+						<Box sx={{ display: "flex" }}>
+							<Box sx={{
+								display: "flex",
+								alignItems: "center",
+								mr: 0.5
+							}}>
+								<Icon path={mdiSend} size={0.7} />
+							</Box>
+							Paste
+						</Box>
+					</Tooltip>
 				</Button>
 				<Button
 					sx={{ mr: 0.5 }}
@@ -228,14 +245,28 @@ function DeviceList(props: Props) {
 					disabled={!deviceData[device.deviceId]?.clip}
 					onClick={() => copyClip(device)}
 				>
-					<Box sx={{
-						display: "flex",
-						alignItems: "center",
-						mr: 0.5
-					}}>
-						<Icon path={mdiContentCopy} size={0.7} />
-					</Box>
-					Copy
+					<Tooltip
+						sx={{ pb: 0 }}
+						disableFocusListener
+						disableHoverListener
+						disableTouchListener
+						placement="top"
+						arrow
+						open={copyTooltip}
+						onClose={() => setCopyTooltip(false)}
+						title="Copied"
+					>
+						<Box sx={{ display: "flex" }}>
+							<Box sx={{
+								display: "flex",
+								alignItems: "center",
+								mr: 0.5
+							}}>
+								<Icon path={mdiContentCopy} size={0.7} />
+							</Box>
+							Copy
+						</Box>
+					</Tooltip>
 				</Button>
 			</Box>
 		</Box>
