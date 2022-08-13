@@ -89,7 +89,9 @@ io.on("connection", async socket => {
 
 		const deviceId = await getFingerprint(publicKey);
 		if (onlineDevices.has(deviceId)) {
-			throw new EventError(ErrCode.DeviceAlreadyOnline);
+			// Disconnect previous socket
+			const state = onlineDevices.get(deviceId)!;
+			io.in(state.socketId).disconnectSockets(true);
 		}
 
 		connectionMap.set(socket.id, deviceId);
@@ -97,13 +99,13 @@ io.on("connection", async socket => {
 			name,
 			socketId: socket.id
 		});
-		console.log(`Device ${name} (${deviceId}) connects`);
+		console.log(`Device ${name} (${deviceId}) connected`);
 		
 		// Disconnection
 		socket.on("disconnect", () => {
-			connectionMap.delete(socket.id);
 			onlineDevices.delete(deviceId);
-			console.log(`Device ${name} (${deviceId}) disconnects`);
+			connectionMap.delete(socket.id);
+			console.log(`Device ${name} (${deviceId}) disconnected`);
 		});
 
 		// send buffered data
@@ -218,8 +220,7 @@ io.on("connection", async socket => {
 			socket.emit("error", newErrEvent(ErrCode.InternalError));
 			console.error((err as Error).message);
 		}
-		socket.disconnect();
-		return;
+		socket.disconnect(true);
 	}
 });
 
