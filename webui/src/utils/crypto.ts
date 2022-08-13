@@ -46,7 +46,7 @@ export async function encrypt(text: string, armoredPublicKey: string) {
 		message: await openpgp.createMessage({ text }),
 		encryptionKeys: publicKey
 	});
-	return msg;
+	return msg.toString();
 }
 
 export async function decrypt(message: string, armoredPrivateKey: string) {
@@ -59,5 +59,5 @@ export async function decrypt(message: string, armoredPrivateKey: string) {
 		}),
 		decryptionKeys: privateKey
 	});
-	return data;
+	return data.toString();
 }

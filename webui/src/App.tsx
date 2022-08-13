@@ -27,7 +27,7 @@ function App() {
   const config = useRecoilValue(configState);
   const newDevices = useRecoilValue(newDeviceListState);
   const [pairedDevices, setPairedDevices] = useRecoilState(pairedDeviceListState);
-  const setSocketStatus = useSetRecoilState(socketStatusState);
+  const [socketStatus, setSocketStatus] = useRecoilState(socketStatusState);
   const setNotification = useSetRecoilState(notificationState);
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
   const setIncomingRequests = useSetRecoilState(incomingRequestListState);
@@ -36,7 +36,7 @@ function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   const connectToServer = async () => {
-    let socket: Socket | null = null;
+    let s: Socket | null = null;
     const challenge = await generateChallenge(config.localDevice.privateKey);
     const socketOptions: Partial<ManagerOptions & SocketOptions> = {
       reconnectionDelayMax: config.reconnectionDelayMax,
@@ -48,42 +48,46 @@ function App() {
       } as AuthRequest
     };
 
-    socket = config.serverUrl.length > 0
+    s = config.serverUrl.length > 0
       ? io(config.serverUrl, socketOptions)
       : io(socketOptions);
 
-    socket.on("connect", () => {
+    s.on("connect", () => {
       console.log("[socket] Connected to server");
       setSocketStatus("connected");
     });
 
-    socket.on("connect_error", () => {
+    s.on("connect_error", () => {
       console.log("[socket] Failed to connect to server");
-      socket = null;
+      s = null;
     });
 
-    socket.on("disconnect", reason => {
+    s.on("disconnect", reason => {
       console.log(`[socket] Disconnected from server: ${reason}`);
-      setSocketStatus("disconnected");
-      if (reason === "io client disconnect" || reason === "io server disconnect") {
-        // For these reasons, the socket won't auto reconnect
-        // Create a new socket to reconnect
-        setSocket(null);
+      if (s === socket) {
+        // Active socket disconnected
+        // There might be other ongoing sockets if it mounts multiple times
+        setSocketStatus("disconnected");
+        if (reason === "io client disconnect" || reason === "io server disconnect") {
+          // For these reasons, the socket won't auto reconnect
+          // Create a new socket to reconnect
+          setTimeout(() => setSocket(null), config.reconnectionDelayMax);
+        }
       }
     });
 
-    socket.on("error", (error: ErrEvent) => {
+    s.on("error", (error: ErrEvent) => {
       setNotification({
         color: "error",
         message: `Socket Error: ${errorToString(error)}`
       });
     });
 
-    socket.on("list", data => {
+    s.on("list", data => {
       setOnlineDevices(data);
     });
     
-    socket.on("pair", (e: PairEvent) => {
+    s.on("pair", (e: PairEvent) => {
       // Use updater form because incomingRequests is not a dependency
       setIncomingRequests(prev => {
         if (prev.findIndex(v => v.deviceId === e.deviceId) !== -1) {
@@ -93,7 +97,7 @@ function App() {
       });
     });
 
-    socket.on("unpair", (e: UnpairEvent) => {
+    s.on("unpair", (e: UnpairEvent) => {
       setPairedDevices(prev => removeDevice(prev, e));
       setNotification({
         color: "info",
@@ -101,12 +105,12 @@ function App() {
       });
     });
 
-    socket.on("share", async (e: ShareEvent) => {
+    s.on("share", async (e: ShareEvent) => {
       try {
         const { type, content } = e.data;
         switch (type) {
           case "clipboard":
-            const clip = await decrypt(content, config.localDevice.privateKey);
+            const clip = (await decrypt(content, config.localDevice.privateKey)).toString();
             setDeviceData(prev => setDeviceClip(prev, e.deviceId, clip));
             if (config.autoCopy) {
               await navigator.clipboard.writeText(clip);
@@ -127,12 +131,19 @@ function App() {
       }
     });
 
-    return socket;
+    return s;
   }
 
   // connect to server when socket is null
   useEffect(() => {
-    if (socket === null) {
+    /**
+     * Note: when using StrictMode in development
+     * This component will be mounted and unmounted twice quickly.
+     * Therefore, there might be twe ongoing connection.
+     * The server will disconnect the first one.
+     */
+    if (socket === null && socketStatus === "disconnected") {
+      setSocketStatus("connecting");
       connectToServer()
         .then(setSocket)
         .catch(err => {
