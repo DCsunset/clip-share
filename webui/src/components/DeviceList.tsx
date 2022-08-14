@@ -21,10 +21,15 @@ import {
 import { DeviceType } from '../types/app';
 import { Device, PairEvent, ShareEvent, UnpairEvent } from "../types/server";
 import { SocketCtx, notificationState } from "../states/app.js";
-import { deviceDataState, outgoingRequestListState, pairedDeviceListState } from "../states/device.js";
+import {
+	deviceDataState,
+	outgoingRequestListState,
+	pairedDeviceListState,
+	onlineDeviceListState
+} from "../states/device.js";
 import { configState } from "../states/config.js";
 import { encrypt } from "../utils/crypto.js";
-import { removeDevice } from "../utils/device.js";
+import { hasDevice, removeDevice } from "../utils/device.js";
 
 function capitalize(str: string) {
 	return str[0].toUpperCase() + str.slice(1);
@@ -43,6 +48,7 @@ function DeviceList(props: Props) {
 	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	const deviceData = useRecoilValue(deviceDataState);
+	const onlineDevices = useRecoilValue(onlineDeviceListState);
 	const [copyTooltip, setCopyTooltip] = useState(false);
 	const [pasteTooltip, setPasteTooltip] = useState(false);
 
@@ -161,116 +167,128 @@ function DeviceList(props: Props) {
 		</>
 	);
 
-	const PairedDevice = ({ device }: { device: Required<Device> }) => (
-		<Box sx={{ width: "100%" }}>
-			<Box sx={{
-				display: "flex",
-				alignItems: "center"
-			}}>
-				<span>{device.name}</span>
+	const PairedDevice = ({ device }: { device: Required<Device> }) => {
+		const online = hasDevice(onlineDevices, device);
+		return (
+			<Box sx={{ width: "100%" }}>
 				<Box sx={{
-					opacity: 0.75,
-					ml: 1
+					display: "flex",
+					alignItems: "center"
 				}}>
-					({device.deviceId})
-				</Box>
-				<span style={{ flexGrow: 1 }} />
-				<IconButton
-					size="small"
-					title="Unpair"
-					onClick={() => unpair(device)}
-				>
-					<Icon path={mdiMinus} size={1} />
-				</IconButton>
-			</Box>
-
-			<Box sx={{
-				display: "flex",
-				alignItems: "center",
-				opacity: 0.95,
-			}}>
-				<Box sx={{
-					opacity: 0.5,
-					mr: 1.2
-				}}>
-					<Icon path={mdiArrowRightBottom} size={1} />
-				</Box>
-				<Button
-					sx={{ mr: 0.5 }}
-					color="inherit"
-					title="Send Text"
-				>
+					<Tooltip arrow title={online ? "online" : "offline"}>
+						<Box sx={{
+							backgroundColor: online ? "success.main" : "gray",
+							width: "10px",
+							height: "10px",
+							borderRadius: "50%",
+							mr: 1.5
+						}} />
+					</Tooltip>
+					<span>{device.name}</span>
 					<Box sx={{
-						display: "flex",
-						alignItems: "center",
-						mr: 0.5
+						opacity: 0.75,
+						ml: 1
 					}}>
-						<Icon path={mdiSend} size={0.7} />
+						({device.deviceId})
 					</Box>
-					Text
-				</Button>
-				<Button
-					sx={{ mr: 0.5 }}
-					color="inherit"
-					title="Send clipboard content"
-					onClick={() => sendClip(device, "test")}
-				>
-					<Tooltip
-						sx={{ pb: 0 }}
-						disableFocusListener
-						disableHoverListener
-						disableTouchListener
-						placement="top"
-						arrow
-						open={pasteTooltip}
-						onClose={() => setPasteTooltip(false)}
-						title="Pasted"
+					<span style={{ flexGrow: 1 }} />
+					<IconButton
+						size="small"
+						title="Unpair"
+						onClick={() => unpair(device)}
 					>
-						<Box sx={{ display: "flex" }}>
-							<Box sx={{
-								display: "flex",
-								alignItems: "center",
-								mr: 0.5
-							}}>
-								<Icon path={mdiSend} size={0.7} />
-							</Box>
-							Paste
-						</Box>
-					</Tooltip>
-				</Button>
-				<Button
-					sx={{ mr: 0.5 }}
-					color="inherit"
-					title="Copy received clip"
-					disabled={!deviceData[device.deviceId]?.clip}
-					onClick={() => copyClip(device)}
-				>
-					<Tooltip
-						sx={{ pb: 0 }}
-						disableFocusListener
-						disableHoverListener
-						disableTouchListener
-						placement="top"
-						arrow
-						open={copyTooltip}
-						onClose={() => setCopyTooltip(false)}
-						title="Copied"
+						<Icon path={mdiMinus} size={1} />
+					</IconButton>
+				</Box>
+
+				<Box sx={{
+					display: "flex",
+					alignItems: "center",
+					opacity: 0.95,
+				}}>
+					<Box sx={{
+						opacity: 0.5,
+						mr: 1.2
+					}}>
+						<Icon path={mdiArrowRightBottom} size={1} />
+					</Box>
+					<Button
+						sx={{ mr: 0.5 }}
+						color="inherit"
+						title="Send Text"
 					>
-						<Box sx={{ display: "flex" }}>
-							<Box sx={{
-								display: "flex",
-								alignItems: "center",
-								mr: 0.5
-							}}>
-								<Icon path={mdiContentCopy} size={0.7} />
-							</Box>
-							Copy
+						<Box sx={{
+							display: "flex",
+							alignItems: "center",
+							mr: 0.5
+						}}>
+							<Icon path={mdiSend} size={0.7} />
 						</Box>
-					</Tooltip>
-				</Button>
+						Text
+					</Button>
+					<Button
+						sx={{ mr: 0.5 }}
+						color="inherit"
+						title="Send clipboard content"
+						onClick={() => sendClip(device, "test")}
+					>
+						<Tooltip
+							sx={{ pb: 0 }}
+							disableFocusListener
+							disableHoverListener
+							disableTouchListener
+							placement="top"
+							arrow
+							open={pasteTooltip}
+							onClose={() => setPasteTooltip(false)}
+							title="Pasted"
+						>
+							<Box sx={{ display: "flex" }}>
+								<Box sx={{
+									display: "flex",
+									alignItems: "center",
+									mr: 0.5
+								}}>
+									<Icon path={mdiSend} size={0.7} />
+								</Box>
+								Paste
+							</Box>
+						</Tooltip>
+					</Button>
+					<Button
+						sx={{ mr: 0.5 }}
+						color="inherit"
+						title="Copy received clip"
+						disabled={!deviceData[device.deviceId]?.clip}
+						onClick={() => copyClip(device)}
+					>
+						<Tooltip
+							sx={{ pb: 0 }}
+							disableFocusListener
+							disableHoverListener
+							disableTouchListener
+							placement="top"
+							arrow
+							open={copyTooltip}
+							onClose={() => setCopyTooltip(false)}
+							title="Copied"
+						>
+							<Box sx={{ display: "flex" }}>
+								<Box sx={{
+									display: "flex",
+									alignItems: "center",
+									mr: 0.5
+								}}>
+									<Icon path={mdiContentCopy} size={0.7} />
+								</Box>
+								Copy
+							</Box>
+						</Tooltip>
+					</Button>
+				</Box>
 			</Box>
-		</Box>
-	);
+		);
+	};
 
 	return (
 		<Card>

@@ -85,10 +85,10 @@ function Layout(props: Props) {
 					<span style={{ flexGrow: 1 }} />
 
 					<Tooltip arrow title={socketStatus}>
-						<Box title={socketStatus} sx={{
+						<Box sx={{
 							backgroundColor: getStatusColor(socketStatus),
-							width: "12px",
-							height: "12px",
+							width: "14px",
+							height: "14px",
 							borderRadius: "50%",
 							mr: 1.5
 						}} />
