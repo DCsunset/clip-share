@@ -1,4 +1,4 @@
-import { Alert, AppBar, IconButton, Snackbar, Toolbar, Typography } from "@mui/material";
+import { Alert, AppBar, IconButton, Snackbar, Toolbar, Tooltip, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect, useState } from "react";
 import Logo from "../logo.svg";
@@ -84,13 +84,15 @@ function Layout(props: Props) {
 					{/* spacer */}
 					<span style={{ flexGrow: 1 }} />
 
-					<Box title={socketStatus} sx={{
-						backgroundColor: getStatusColor(socketStatus),
-						width: "12px",
-						height: "12px",
-						borderRadius: "50%",
-						mr: 1.5
-					}} />
+					<Tooltip arrow title={socketStatus}>
+						<Box title={socketStatus} sx={{
+							backgroundColor: getStatusColor(socketStatus),
+							width: "12px",
+							height: "12px",
+							borderRadius: "50%",
+							mr: 1.5
+						}} />
+					</Tooltip>
 					<IconButton
 						color="inherit"
 						title="Settings"
