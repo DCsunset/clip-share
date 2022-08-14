@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import Icon from '@mdi/react';
 import { DateTime } from "luxon";
@@ -50,7 +50,12 @@ function DeviceList(props: Props) {
 	const deviceData = useRecoilValue(deviceDataState);
 	const onlineDevices = useRecoilValue(onlineDeviceListState);
 	const [copyTooltip, setCopyTooltip] = useState(false);
+	// useRef can keep state and won't trigger re-rendering
+	const copyTooltipTimeout = useRef<number|null>(null);
 	const [pasteTooltip, setPasteTooltip] = useState(false);
+	const pasteTooltipTimeout = useRef<number|null>(null);
+	const [textTooltip, setTextTooltip] = useState(false);
+	const textTooltipTimeout = useRef<number|null>(null);
 
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
 
@@ -75,9 +80,13 @@ function DeviceList(props: Props) {
 
 			socket.emit("share", shareEvent);
 			setPasteTooltip(true);
-			setTimeout(() => {
+			if (pasteTooltipTimeout.current) {
+				clearTimeout(pasteTooltipTimeout.current);
+				pasteTooltipTimeout.current = null;
+			}
+			pasteTooltipTimeout.current = setTimeout(() => {
 				setPasteTooltip(false);
-			}, 3000);
+			}, 2000);
 		}
 		catch (err: any) {
 			setNotification({
@@ -92,9 +101,13 @@ function DeviceList(props: Props) {
 		if (clip) {
 			await navigator.clipboard.writeText(clip);
 			setCopyTooltip(true);
-			setTimeout(() => {
+			if (copyTooltipTimeout.current) {
+				clearTimeout(copyTooltipTimeout.current);
+				copyTooltipTimeout.current = null;
+			}
+			copyTooltipTimeout.current = setTimeout(() => {
 				setCopyTooltip(false);
-			}, 3000);
+			}, 2000);
 		}
 	};
 
@@ -200,7 +213,7 @@ function DeviceList(props: Props) {
 						<Icon path={mdiMinus} size={1} />
 					</IconButton>
 				</Box>
-
+				
 				<Box sx={{
 					display: "flex",
 					alignItems: "center",
@@ -217,14 +230,28 @@ function DeviceList(props: Props) {
 						color="inherit"
 						title="Send Text"
 					>
-						<Box sx={{
-							display: "flex",
-							alignItems: "center",
-							mr: 0.5
-						}}>
-							<Icon path={mdiSend} size={0.7} />
-						</Box>
-						Text
+						<Tooltip
+							sx={{ pb: 0 }}
+							disableFocusListener
+							disableHoverListener
+							disableTouchListener
+							placement="top"
+							arrow
+							open={textTooltip}
+							onClose={() => setTextTooltip(false)}
+							title="Pasted"
+						>
+							<Box sx={{ display: "flex" }}>
+								<Box sx={{
+									display: "flex",
+									alignItems: "center",
+									mr: 0.5
+								}}>
+									<Icon path={mdiSend} size={0.7} />
+								</Box>
+								Text
+							</Box>
+						</Tooltip>
 					</Button>
 					<Button
 						sx={{ mr: 0.5 }}
