@@ -208,7 +208,8 @@ function SettingsDialog(props: Props) {
 					</Grid>
 				</Grid>
 
-				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+				{/* Comment out because Permissions APIs don't fully work for clipboard */}
+				{/* <Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
 						<ListItemText secondary="Auto copy received clips into clipboard">
 							Auto Copy
@@ -220,7 +221,7 @@ function SettingsDialog(props: Props) {
 							onChange={e => setAutoCopy(e.target.checked)}
 						/>
 					</Grid>
-				</Grid>
+				</Grid> */}
 			</DialogContent>
 			
 			<DialogActions>

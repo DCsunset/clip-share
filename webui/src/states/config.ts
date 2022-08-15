@@ -28,7 +28,8 @@ export async function initConfig(): Promise<Config> {
 	return {
 		localDevice: await initDevice(),
 		serverUrl: "",
-		autoCopy: true,
+		// autoCopy: true,
+		autoCopy: false,
 		reconnectionDelayMax: 5000,
 		pairingTimeout: 600
 	};
