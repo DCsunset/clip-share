@@ -123,7 +123,7 @@ function DeviceList(props: Props) {
 		const event: PairEvent = {
 			...device,
 			publicKey: config.localDevice!.publicKey,
-			expiryDate: DateTime.local().plus({
+			expiryDate: DateTime.now().plus({
 				seconds: config.pairingTimeout
 			}).toISO()
 		};

@@ -30,7 +30,7 @@ function DevicePairing() {
 		const event = incomingRequests[0];
 		if (event.expiryDate) {
 			const exp = DateTime.fromISO(event.expiryDate);
-			if (exp < DateTime.local()) {
+			if (exp < DateTime.now()) {
 				// expired
 				setIncomingRequests(prev => prev.slice(1));
 				return;
