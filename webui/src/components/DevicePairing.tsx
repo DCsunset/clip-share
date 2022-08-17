@@ -39,6 +39,8 @@ function DevicePairing() {
 
 		const req = findDevice(outgoingRequests, event);
 		if (req !== null) {
+			// remove the outgoing event
+			setOutgoingRequests(prev => removeDevice(prev, event));
 			const exp = DateTime.fromISO(req.expiryDate!);
 			if (exp > DateTime.now()) {
 				// successfully paired
@@ -51,8 +53,6 @@ function DevicePairing() {
 				})
 				return;
 			}
-			// remove the outgoing event
-			setOutgoingRequests(prev => removeDevice(prev, event));
 		}
 
 		if (!currentEvent) {

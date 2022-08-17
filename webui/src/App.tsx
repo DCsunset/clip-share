@@ -22,7 +22,7 @@ import {
 } from './states/device';
 import { notificationState, SocketCtx, socketStatusState } from './states/app';
 import { errorToString } from './utils/errors';
-import { removeDevice } from "./utils/device.js";
+import { hasDevice, removeDevice } from "./utils/device.js";
 
 function App() {
   const config = useRecoilValue(configState);
@@ -100,11 +100,19 @@ function App() {
     });
 
     s.on("unpair", (e: UnpairEvent) => {
+      if (hasDevice(pairedDevices, e)) {
+        setNotification({
+          color: "info",
+          message: `Device ${e.name} unpaired`
+        });
+      }
+      else {
+        setNotification({
+          color: "error",
+          message: `Device ${e.name} rejected pairing`
+        });
+      }
       setPairedDevices(prev => removeDevice(prev, e));
-      setNotification({
-        color: "info",
-        message: `Device ${e.name} unpaired`
-      });
 			// remove the outgoing event as well (rejection)
 			setOutgoingRequests(prev => removeDevice(prev, e));
     });

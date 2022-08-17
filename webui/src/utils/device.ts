@@ -13,10 +13,8 @@ export function hasDevice(deviceList: Device[], device: Device) {
 
 /// Add device to a list (return a new list)
 export function addDevice<T extends Device>(deviceList: T[], device: T) {
-	if (hasDevice(deviceList, device)) {
-		return deviceList;
-	}
-	return [...deviceList, device];
+	// remove old devices first
+	return [...removeDevice(deviceList, device), device];
 }
 
 /// Remove device from a list (return a new list)
