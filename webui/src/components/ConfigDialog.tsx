@@ -30,6 +30,7 @@ function SettingsDialog(props: Props) {
 	const [serverUrl, setServerUrl] = useState(config.serverUrl);
 	const [deviceName, setDeviceName] = useState(config.localDevice?.name ?? "Unnamed");
 	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(config.reconnectionDelayMax.toString());
+	const [pairingTimeout, setPairingTimeout] = useState(config.pairingTimeout.toString());
 	const [autoCopy, setAutoCopy] = useState(config.autoCopy);
 
 	const validNumber = (s: string) => {
@@ -39,8 +40,10 @@ function SettingsDialog(props: Props) {
 
 	const validName = () => deviceName.length > 0;
 	const validReconnectionDelayMax = () => validNumber(reconnectionDelayMax);
+	const validPairingTimeout = () => validNumber(pairingTimeout);
 	const validSettings = () => validName()
-		&& validReconnectionDelayMax();
+		&& validReconnectionDelayMax()
+		&& validPairingTimeout();
 
 	useEffect(() => {
 		// Init device if empty
@@ -91,6 +94,22 @@ function SettingsDialog(props: Props) {
 				}
 			});
 		}
+		const reconnectionDelayMaxNum = parseInt(reconnectionDelayMax);
+		if (config.reconnectionDelayMax !== reconnectionDelayMaxNum) {
+			updated = true;
+			setConfig({
+				...config,
+				reconnectionDelayMax: reconnectionDelayMaxNum
+			});
+		}
+		const pairingTimeoutNum = parseInt(pairingTimeout);
+		if (config.pairingTimeout !== pairingTimeoutNum) {
+			updated = true;
+			setConfig({
+				...config,
+				pairingTimeout: pairingTimeoutNum
+			});
+		}
 		
 		if (updated) {
 			setNotification({
@@ -105,6 +124,7 @@ function SettingsDialog(props: Props) {
 		setServerUrl(config.serverUrl);
 		setDeviceName(config.localDevice?.name ?? "");
 		setReconnectionDelayMax(config.reconnectionDelayMax.toString());
+		setPairingTimeout(config.pairingTimeout.toString());
 		setAutoCopy(config.autoCopy);
 	};
 	
@@ -203,6 +223,26 @@ function SettingsDialog(props: Props) {
 							}}
 							value={reconnectionDelayMax}
 							onChange={event => setReconnectionDelayMax(event.target.value)}
+							{...requiredProps}
+						/>
+					</Grid>
+				</Grid>
+
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
+					<Grid item>
+						<ListItemText secondary="Timeout for outgoing pair request (in s)">
+							Pairing Timeout
+						</ListItemText>
+					</Grid>
+					<Grid item display="inline-flex" alignItems="center">
+						<TextField
+							error={!validPairingTimeout()}
+							variant="standard"
+							style={{
+								maxWidth: "85px"
+							}}
+							value={pairingTimeout}
+							onChange={event => setPairingTimeout(event.target.value)}
 							{...requiredProps}
 						/>
 					</Grid>
