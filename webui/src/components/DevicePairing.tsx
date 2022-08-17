@@ -5,7 +5,7 @@ import { incomingRequestListState, outgoingRequestListState, pairedDeviceListSta
 import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
 import { PairEvent } from "../types/server";
-import { addDevice, hasDevice, removeDevice } from "../utils/device";
+import { addDevice, findDevice, hasDevice, removeDevice } from "../utils/device";
 import { DateTime } from "luxon";
 import Icon from "@mdi/react";
 import { mdiSwapHorizontal } from "@mdi/js";
@@ -37,18 +37,22 @@ function DevicePairing() {
 			}
 		}
 
-		if (hasDevice(outgoingRequests, event)) {
-			// successfully paired
-			setPairedDevices(prev => addDevice(prev, event));
-			// remove the current event
-			setIncomingRequests(prev => prev.slice(1));
+		const req = findDevice(outgoingRequests, event);
+		if (req !== null) {
+			const exp = DateTime.fromISO(req.expiryDate!);
+			if (exp > DateTime.now()) {
+				// successfully paired
+				setPairedDevices(prev => addDevice(prev, event));
+				// remove the current event
+				setIncomingRequests(prev => prev.slice(1));
+				setNotification({
+					color: "success",
+					message: `Device ${event.name} paired successfully`
+				})
+				return;
+			}
 			// remove the outgoing event
 			setOutgoingRequests(prev => removeDevice(prev, event));
-			setNotification({
-				color: "success",
-				message: `Device ${event.name} paired successfully`
-			})
-			return;
 		}
 
 		if (!currentEvent) {
