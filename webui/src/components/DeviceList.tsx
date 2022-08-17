@@ -7,12 +7,15 @@ import {
 	Button,
 	Card,
 	CardContent,
+	CardActions,
 	Collapse,
 	IconButton,
 	List,
 	ListItem,
 	Tooltip,
-	Typography
+	Typography,
+	Dialog,
+	TextField
 } from '@mui/material';
 import {
 	mdiArrowRightBottom,
@@ -40,6 +43,14 @@ type Props = {
 	devices: Device[]
 };
 
+const useBoolState = () => {
+	const [value, set] = useState(false);
+	return {
+		value,
+		set
+	};
+};
+
 function DeviceList(props: Props) {
 	const [visible, setVisible] = useState(true);
 	const socket = useContext(SocketCtx);
@@ -49,15 +60,40 @@ function DeviceList(props: Props) {
 	const setPairedDevices = useSetRecoilState(pairedDeviceListState);
 	const deviceData = useRecoilValue(deviceDataState);
 	const onlineDevices = useRecoilValue(onlineDeviceListState);
-	const [copyTooltip, setCopyTooltip] = useState(false);
+	const tooltips = {
+		paste: useBoolState(),
+		copy: useBoolState(),
+		text: useBoolState(),
+		textDialog: useBoolState(),
+	};
 	// useRef can keep state and won't trigger re-rendering
-	const copyTooltipTimeout = useRef<number|null>(null);
-	const [pasteTooltip, setPasteTooltip] = useState(false);
-	const pasteTooltipTimeout = useRef<number|null>(null);
-	const [textTooltip, setTextTooltip] = useState(false);
-	const textTooltipTimeout = useRef<number|null>(null);
+	const tooltipTimeouts = useRef<{
+		[name: string]: number | null
+	}>({
+		paste: null,
+		copy: null,
+		text: null,
+		textDialog: null
+	});
+	const [textDialog, setTextDialog] = useState({
+		open: false,
+		text: "",
+		device: null as (Device | null)
+	});
 
 	const icon = props.type === "new" ? mdiLaptop : mdiLinkVariant;
+
+	const showTooltip = (name: keyof typeof tooltips) => {
+		tooltips[name].set(true);
+		const timeout = tooltipTimeouts.current[name];
+		if (timeout) {
+			clearTimeout(timeout);
+			tooltipTimeouts.current[name] = null;
+		}
+		tooltipTimeouts.current[name] = setTimeout(() => {
+			tooltips[name].set(false);
+		}, 2000);
+	};
 
 	const sendClip = async (device: Device, content: string) => {
 		if (socket === null) {
@@ -79,14 +115,6 @@ function DeviceList(props: Props) {
 			};
 
 			socket.emit("share", shareEvent);
-			setPasteTooltip(true);
-			if (pasteTooltipTimeout.current) {
-				clearTimeout(pasteTooltipTimeout.current);
-				pasteTooltipTimeout.current = null;
-			}
-			pasteTooltipTimeout.current = setTimeout(() => {
-				setPasteTooltip(false);
-			}, 2000);
 		}
 		catch (err: any) {
 			setNotification({
@@ -100,14 +128,7 @@ function DeviceList(props: Props) {
 		const clip = deviceData[device.deviceId]?.clip;
 		if (clip) {
 			await navigator.clipboard.writeText(clip);
-			setCopyTooltip(true);
-			if (copyTooltipTimeout.current) {
-				clearTimeout(copyTooltipTimeout.current);
-				copyTooltipTimeout.current = null;
-			}
-			copyTooltipTimeout.current = setTimeout(() => {
-				setCopyTooltip(false);
-			}, 2000);
+			showTooltip("copy");
 		}
 	};
 
@@ -213,7 +234,7 @@ function DeviceList(props: Props) {
 						<Icon path={mdiMinus} size={1} />
 					</IconButton>
 				</Box>
-				
+
 				<Box sx={{
 					display: "flex",
 					alignItems: "center",
@@ -229,17 +250,23 @@ function DeviceList(props: Props) {
 						sx={{ mr: 0.5 }}
 						color="inherit"
 						title="Send Text"
+						onClick={() => setTextDialog({
+							open: true,
+							text: "",
+							device
+						})}
 					>
 						<Tooltip
 							sx={{ pb: 0 }}
 							disableFocusListener
 							disableHoverListener
 							disableTouchListener
+							disableInteractive
 							placement="top"
 							arrow
-							open={textTooltip}
-							onClose={() => setTextTooltip(false)}
-							title="Pasted"
+							open={tooltips.text.value}
+							// onClose={() => tooltips.text.set(false)}
+							title="Sent"
 						>
 							<Box sx={{ display: "flex" }}>
 								<Box sx={{
@@ -257,7 +284,10 @@ function DeviceList(props: Props) {
 						sx={{ mr: 0.5 }}
 						color="inherit"
 						title="Send clipboard content"
-						onClick={() => sendClip(device, "test")}
+						onClick={() => {
+							sendClip(device, "test");
+							showTooltip("paste");
+						}}
 					>
 						<Tooltip
 							sx={{ pb: 0 }}
@@ -266,8 +296,8 @@ function DeviceList(props: Props) {
 							disableTouchListener
 							placement="top"
 							arrow
-							open={pasteTooltip}
-							onClose={() => setPasteTooltip(false)}
+							open={tooltips.paste.value}
+							onClose={() => tooltips.paste.set(false)}
 							title="Pasted"
 						>
 							<Box sx={{ display: "flex" }}>
@@ -296,8 +326,8 @@ function DeviceList(props: Props) {
 							disableTouchListener
 							placement="top"
 							arrow
-							open={copyTooltip}
-							onClose={() => setCopyTooltip(false)}
+							open={tooltips.copy.value}
+							onClose={() => tooltips.copy.set(false)}
 							title="Copied"
 						>
 							<Box sx={{ display: "flex" }}>
@@ -318,70 +348,112 @@ function DeviceList(props: Props) {
 	};
 
 	return (
-		<Card>
-			<CardContent sx={{
-				"&:last-child": { pb: 2 }
-			}}>
-				<Box sx={{
-					display: "flex"
+		<>
+			<Dialog
+				open={textDialog.open}
+				onClose={() => setTextDialog({
+					open: false,
+					text: "",
+					device: null
+				})}
+			>
+				<Card sx={{ width: "400px" }}>
+					<CardContent>
+						<Typography gutterBottom variant="h6">
+							Send Text
+						</Typography>
+						<TextField
+							variant="outlined"
+							fullWidth
+							value={textDialog.text}
+							onChange={e => setTextDialog({
+								...textDialog,
+								text: e.target.value
+							})}
+							multiline
+						/>
+					</CardContent>
+					<CardActions sx={{
+						justifyContent: "flex-end"
+					}}>
+						<Button onClick={() => {
+							sendClip(textDialog.device!, textDialog.text);
+							setTextDialog({
+								...textDialog,
+								open: false,
+								text: ""
+							});
+							showTooltip("text");
+						}}>Submit</Button>
+					</CardActions>
+				</Card>
+			</Dialog>
+
+			<Card>
+				<CardContent sx={{
+					"&:last-child": { pb: 2 }
 				}}>
 					<Box sx={{
-						display: "flex",
-						alignItems: "center",
-						mr: 1.2,
-						mt: 0.2
+						display: "flex"
 					}}>
-						<Icon path={icon} size={1} />
-					</Box>
+						<Box sx={{
+							display: "flex",
+							alignItems: "center",
+							mr: 1.2,
+							mt: 0.2
+						}}>
+							<Icon path={icon} size={1} />
+						</Box>
 
-					<Typography
-						variant="h6"
-						style={{
-							fontWeight: 400
-						}}
-					>
-						{capitalize(props.type)} Devices
-					</Typography>
-
-					<span style={{ flexGrow: 1 }} />
-
-					<IconButton
-						disableRipple
-						sx={{ p: 0 }}
-						onClick={() => setVisible(!visible)}
-					>
-						<Icon
-							path={mdiChevronDown}
+						<Typography
+							variant="h6"
 							style={{
-								transform: `rotate(${visible ? "0" : "-180deg"})`,
-								transition: "all 0.2s"
+								fontWeight: 400
 							}}
-							size={1}
-						/>
-					</IconButton>
-				</Box>
-				<hr />
+						>
+							{capitalize(props.type)} Devices
+						</Typography>
 
-				<Collapse in={visible}>
-					<List sx={{ py: 0 }}>
-						{props.devices.map(device => (
-							<ListItem
-								key={device.deviceId}
-								sx={{ px: 1 }}
-							>
-								{
-									props.type === "new" ? (
-										<NewDevice device={device} />
-									) : (
-										<PairedDevice device={device as Required<Device>} />
-									)
-								}
-							</ListItem>
-						))}
-					</List>
-				</Collapse>
-			</CardContent>
-		</Card>
+						<span style={{ flexGrow: 1 }} />
+
+						<IconButton
+							disableRipple
+							sx={{ p: 0 }}
+							onClick={() => setVisible(!visible)}
+						>
+							<Icon
+								path={mdiChevronDown}
+								style={{
+									transform: `rotate(${visible ? "0" : "-180deg"})`,
+									transition: "all 0.2s"
+								}}
+								size={1}
+							/>
+						</IconButton>
+					</Box>
+					<hr />
+
+					<Collapse in={visible}>
+						<List sx={{ py: 0 }}>
+							{props.devices.map(device => (
+								<ListItem
+									key={device.deviceId}
+									sx={{ px: 1 }}
+								>
+									{
+										props.type === "new" ? (
+											<NewDevice device={device} />
+										) : (
+											<PairedDevice device={device as Required<Device>} />
+										)
+									}
+								</ListItem>
+							))}
+						</List>
+					</Collapse>
+				</CardContent>
+			</Card>
+		</>
 	);
 }
 
