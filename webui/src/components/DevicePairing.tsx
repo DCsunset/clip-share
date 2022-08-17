@@ -89,6 +89,8 @@ function DevicePairing() {
 			deviceId: device.deviceId,
 			name: device.name
 		} as UnpairEvent);
+
+		setSnackbarOpen(false);
 	};
 
 	const acceptPairing = (device: PairEvent) => {
@@ -143,7 +145,7 @@ function DevicePairing() {
 				}}>
 					<Button
 						color="error"
-						onClick={handleSnackbarClose}
+						onClick={() => rejectPairing(currentEvent!)}
 					>
 						Reject
 					</Button>
