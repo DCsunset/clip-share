@@ -17,6 +17,7 @@ import {
   newDeviceListState,
   onlineDeviceListState,
   pairedDeviceListState,
+  outgoingRequestListState,
   setDeviceClip
 } from './states/device';
 import { notificationState, SocketCtx, socketStatusState } from './states/app';
@@ -32,6 +33,7 @@ function App() {
   const setOnlineDevices = useSetRecoilState(onlineDeviceListState);
   const setIncomingRequests = useSetRecoilState(incomingRequestListState);
   const setDeviceData = useSetRecoilState(deviceDataState);
+  const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -103,6 +105,8 @@ function App() {
         color: "info",
         message: `Device ${e.name} unpaired`
       });
+			// remove the outgoing event as well (rejection)
+			setOutgoingRequests(prev => removeDevice(prev, e));
     });
 
     s.on("share", async (e: ShareEvent) => {

@@ -4,8 +4,8 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { incomingRequestListState, outgoingRequestListState, pairedDeviceListState } from "../states/device";
 import { notificationState, SocketCtx } from "../states/app.js";
 import { configState } from "../states/config.js";
-import { PairEvent } from "../types/server";
-import { addDevice, findDevice, hasDevice, removeDevice } from "../utils/device";
+import { PairEvent, UnpairEvent } from "../types/server";
+import { addDevice, findDevice, removeDevice } from "../utils/device";
 import { DateTime } from "luxon";
 import Icon from "@mdi/react";
 import { mdiSwapHorizontal } from "@mdi/js";
@@ -73,6 +73,22 @@ function DevicePairing() {
 	// Invalidate current event only after the snackbar closes completely
 	const handleSnackbarExited = () => {
 		setCurrentEvent(null);
+	};
+
+	const rejectPairing = (device: PairEvent) => {
+		if (socket === null) {
+			setNotification({
+				color: "error",
+				message: "Connection not established"
+			});
+			return;
+		}
+
+		// send unpair event to rejecg
+		socket.emit("unpair", {
+			deviceId: device.deviceId,
+			name: device.name
+		} as UnpairEvent);
 	};
 
 	const acceptPairing = (device: PairEvent) => {
