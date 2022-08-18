@@ -2,7 +2,7 @@ import {
   Container,
   Grid
 } from '@mui/material'
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, ManagerOptions, Socket, SocketOptions } from "socket.io-client";
 import DeviceList from './components/DeviceList';
 import Layout from './components/Layout';
@@ -35,7 +35,7 @@ function App() {
   const setDeviceData = useSetRecoilState(deviceDataState);
   const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socket = useRef<Socket | null>(null);
 
   const connectToServer = async () => {
     let s: Socket | null = null;
@@ -66,7 +66,7 @@ function App() {
 
     s.on("disconnect", reason => {
       console.log(`[socket] Disconnected from server: ${reason}`);
-      if (s === socket) {
+      if (s === socket.current) {
         // Active socket disconnected
         // There might be other ongoing sockets if it mounts multiple times
         setSocketStatus("disconnected");
@@ -159,9 +159,8 @@ function App() {
      */
     setSocketStatus("connecting");
     connectToServer()
-      .then(setSocket)
+      .then(s => socket.current = s)
       .catch(err => {
-        setSocket(null);
         setNotification({
           color: "error",
           message: `Error: ${err.message}`
@@ -169,15 +168,15 @@ function App() {
       });
 
     return () => {
-      if (socket && socket.connected) {
+      if (socket.current && socket.current.connected) {
         // Disconnect when not connected will result in browser error
-        socket.disconnect();
+        socket.current.disconnect();
       }
     };
   }, [config]);
 
   return (
-    <SocketCtx.Provider value={socket}>
+    <SocketCtx.Provider value={socket.current}>
       <Layout>
         <DevicePairing />
         <Container sx={{ px: 1, py: 2 }} >
