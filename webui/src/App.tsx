@@ -70,10 +70,10 @@ function App() {
         // Active socket disconnected
         // There might be other ongoing sockets if it mounts multiple times
         setSocketStatus("disconnected");
-        if (reason === "io client disconnect" || reason === "io server disconnect") {
+        if (reason === "io server disconnect") {
           // For these reasons, the socket won't auto reconnect
           // Create a new socket to reconnect
-          setTimeout(() => setSocket(null), config.reconnectionDelayMax);
+          console.error("[socket] Server disconnected");
         }
       }
     });
@@ -146,7 +146,10 @@ function App() {
     return s;
   }
 
-  // connect to server when socket is null
+  /**
+   * Connect to server on startup
+   * Explicit dependency to prevent socket from being a dependent (it will result in deadloop).
+   */
   useEffect(() => {
     /**
      * Note: when using StrictMode in development
@@ -154,26 +157,24 @@ function App() {
      * Therefore, there might be twe ongoing connection.
      * The server will disconnect the first one.
      */
-    if (socket === null && socketStatus === "disconnected") {
-      setSocketStatus("connecting");
-      connectToServer()
-        .then(setSocket)
-        .catch(err => {
-          setSocket(null);
-          setNotification({
-            color: "error",
-            message: `Error: ${err.message}`
-          });
+    setSocketStatus("connecting");
+    connectToServer()
+      .then(setSocket)
+      .catch(err => {
+        setSocket(null);
+        setNotification({
+          color: "error",
+          message: `Error: ${err.message}`
         });
-    }
-  }, [socket]);
+      });
 
-  // Disconnects when config changes
-  useEffect(() => {
-    if (socket !== null) {
-      socket.disconnect();
-    }
-  }, [config])
+    return () => {
+      if (socket && socket.connected) {
+        // Disconnect when not connected will result in browser error
+        socket.disconnect();
+      }
+    };
+  }, [config]);
 
   return (
     <SocketCtx.Provider value={socket}>
