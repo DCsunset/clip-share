@@ -95,7 +95,14 @@ function DeviceList(props: Props) {
 		}, 2000);
 	};
 
-	const sendClip = async (device: Device, content: string) => {
+	const getClipboard = async () => {
+		// In firefox v101 and below, enable asyncClipboard in about:config
+		return await navigator.clipboard.readText();
+	};
+
+	const sendClip = async (device: Device, content?: string) => {
+		// If not specified, get from clipboard
+		content = content ?? await getClipboard();
 		if (socket === null) {
 			setNotification({
 				color: "error",
@@ -285,7 +292,7 @@ function DeviceList(props: Props) {
 						color="inherit"
 						title="Send clipboard content"
 						onClick={() => {
-							sendClip(device, "test");
+							sendClip(device);
 							showTooltip("paste");
 						}}
 					>
