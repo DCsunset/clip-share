@@ -110,6 +110,13 @@ function SettingsDialog(props: Props) {
 				pairingTimeout: pairingTimeoutNum
 			});
 		}
+		if (config.autoCopy !== autoCopy) {
+			updated = true;
+			setConfig({
+				...config,
+				autoCopy
+			});
+		}
 		
 		if (updated) {
 			setNotification({
@@ -248,8 +255,7 @@ function SettingsDialog(props: Props) {
 					</Grid>
 				</Grid>
 
-				{/* Comment out because Permissions APIs don't fully work for clipboard */}
-				{/* <Grid container justifyContent="space-between" sx={{ px: 1 }}>
+				<Grid container justifyContent="space-between" sx={{ px: 1 }}>
 					<Grid item>
 						<ListItemText secondary="Auto copy received clips into clipboard">
 							Auto Copy
@@ -261,7 +267,7 @@ function SettingsDialog(props: Props) {
 							onChange={e => setAutoCopy(e.target.checked)}
 						/>
 					</Grid>
-				</Grid> */}
+				</Grid>
 			</DialogContent>
 			
 			<DialogActions>
