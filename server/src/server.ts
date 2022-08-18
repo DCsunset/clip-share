@@ -105,6 +105,10 @@ io.on("connection", async socket => {
 		socket.on("disconnect", () => {
 			onlineDevices.delete(deviceId);
 			connectionMap.delete(socket.id);
+			// Send updated device list to every connected device
+			for (const { socketId } of onlineDevices.values()) {
+				io.to(socketId).emit("list", getOnlineDevices());
+			}
 			console.log(`Device ${name} (${deviceId}) disconnected`);
 		});
 
