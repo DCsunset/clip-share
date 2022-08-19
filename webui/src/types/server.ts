@@ -5,33 +5,26 @@
  */
 export type Config = {
 	bufferSize: {
-		clipboard: number,
-		notification: number
+		[type in EventType]: number
 	}	
 };
 
 export type DeviceState = {
 	name: string,
 	/// socket.io connection
-	socketId: string,
-	publicKey: string
+	socketId: string
 };
 
-/* Data type shared between devices
- * 2 types of data:
- *  clipboard
- *  notification
+/**
+ * Event types to buffer at server
  */
-export type DataType = "clipboard" | "notification";
+export type EventType = "share" | "unpair";
 
 /**
  * Buffer shared data
  */
-export type DataBuffer = {
-	[type in DataType]: {
-		from: string;
-		content: string;
-	}[];
+export type EventBuffer = {
+	[type in EventType]: any[];
 };
 
 /**
@@ -87,6 +80,13 @@ export interface UnpairEvent {
 	deviceId: string,
 	name: string
 };
+
+
+
+/**
+ * Data types shared between devices
+ */
+export type DataType = "clip" | "notification";
 
 /**
  * Event to share data

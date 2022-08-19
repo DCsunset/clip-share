@@ -121,7 +121,7 @@ function App() {
       try {
         const { type, content } = e.data;
         switch (type) {
-          case "clipboard":
+          case "clip":
             const clip = (await decrypt(content, config.localDevice.privateKey)).toString();
             setDeviceData(prev => setDeviceClip(prev, e.deviceId, clip));
             if (config.autoCopy) {

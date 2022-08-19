@@ -99,7 +99,7 @@ const PairedDevice = ({ device }: { device: Required<Device> }) => {
 			const shareEvent: ShareEvent = {
 				deviceId: device.deviceId,
 				data: {
-					type: "clipboard",
+					type: "clip",
 					content: msg
 				}
 			};
