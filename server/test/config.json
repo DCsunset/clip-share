@@ -1,6 +1,6 @@
 {
 	"bufferSize": {
-		"clipboard": 1,
-		"notification": 5
+		"share": 20,
+		"unpair": 20
 	}
 }

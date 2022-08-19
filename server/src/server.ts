@@ -1,8 +1,8 @@
 import { Server } from "socket.io";
 import {
 	AuthRequest,
-	DataBuffer,
-	DataType,
+	EventBuffer,
+	EventType,
 	Device,
 	DeviceState,
 	ErrCode,
@@ -30,22 +30,19 @@ const config = readConfig();
 // Buffer unsent data (wait until device online)
 // Map<fingerprint, buffer>
 // TODO: add expiry data to release memory
-const buffer: Map<string, DataBuffer> = new Map();
+const buffer: Map<string, EventBuffer> = new Map();
 
-function addToBuffer(fromDevice: string, toDevice: string, data: ShareEvent["data"]) {
-	if (!buffer.has(toDevice)) {
-		buffer.set(toDevice, {
-			clipboard: [],
-			notification: []
+function addToBuffer(deviceId: string, type: EventType, event: any) {
+	if (!buffer.has(deviceId)) {
+		buffer.set(deviceId, {
+			share: [],
+			unpair: []
 		});
 	}
-	const buf = buffer.get(toDevice)!;
-	buf[data.type].push({
-		from: fromDevice,
-		content: data.content
-	});
-	if (buf[data.type].length > config.bufferSize[data.type]) {
-		buf[data.type].shift();
+	const buf = buffer.get(deviceId)!;
+	buf[type].push(event);
+	if (buf[type].length > config.bufferSize[type]) {
+		buf[type].shift();
 	}
 }
 
@@ -112,20 +109,13 @@ io.on("connection", async socket => {
 			console.log(`Device ${name} (${deviceId}) disconnected`);
 		});
 
-		// send buffered data
+		// send buffered events
 		if (buffer.has(deviceId)) {
 			const buf = buffer.get(deviceId)!;
-			const types: DataType[] = ["clipboard", "notification"];
+			const types: EventType[] = ["share", "unpair"];
 			for (const type of types) {
 				for (const data of buf[type]) {
-					const shareEvent: ShareEvent = {
-						deviceId: data.from,
-						data: {
-							type,
-							content: data.content
-						}
-					};
-					socket.emit("share", shareEvent);
+					socket.emit(type, data);
 				}
 			}
 		}
@@ -171,8 +161,10 @@ io.on("connection", async socket => {
 			}
 
 			const event = data as UnpairEvent;
+			const sentEvent: UnpairEvent = { deviceId, name };
+
 			if (!onlineDevices.has(event.deviceId)) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceOffline, event));
+				addToBuffer(event.deviceId, "unpair", sentEvent);
 				return;
 			}
 
@@ -184,10 +176,7 @@ io.on("connection", async socket => {
 			}
 
 			// Send sender's info to receiver
-			io.to(otherDevice.socketId).emit("unpair", {
-				deviceId,
-				name
-			} as UnpairEvent);
+			io.to(otherDevice.socketId).emit("unpair", sentEvent);
 		});
 		
 		// Share data
@@ -196,19 +185,21 @@ io.on("connection", async socket => {
 				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
 				return;
 			}
-			const shareEvent = data as ShareEvent;
-			if (!onlineDevices.has(shareEvent.deviceId)) {
-				addToBuffer(deviceId, shareEvent.deviceId, shareEvent.data);
+			
+			const event = data as ShareEvent;
+			const sentEvent: ShareEvent = {
+				...event,
+				deviceId
+			};
+			if (!onlineDevices.has(event.deviceId)) {
+				addToBuffer(event.deviceId, "share", sentEvent);
+				return;
 			}
-			else {
-				// Info of the other devices
-				const otherDevice = onlineDevices.get(shareEvent.deviceId)!;
-				// Send sender's info to receiver
-				io.to(otherDevice.socketId).emit("share", {
-					...shareEvent,
-					deviceId
-				} as ShareEvent);
-			}
+
+			// Info of the other devices
+			const otherDevice = onlineDevices.get(event.deviceId)!;
+			// Send sender's info to receiver
+			io.to(otherDevice.socketId).emit("share", sentEvent);
 		});
 
 		// Send updated device list to every connected device
