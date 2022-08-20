@@ -1,6 +1,5 @@
 import { Device, PairEvent } from "../types/server";
 import { atom, selector } from "recoil";
-import { hasDevice } from "../utils/device";
 import { localStorageEffect } from "./effects";
 import { configState } from "./config.js";
 

@@ -14,10 +14,11 @@ import {
 	TextField,
 	TextFieldProps
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState, useContext } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { notificationState } from "../states/app";
+import { notificationState, SocketCtx } from "../states/app";
 import { configState, initDevice } from "../states/config";
+import { outgoingRequestListState, pairedDeviceListState } from "../states/device";
 
 interface Props {
 	open: boolean;
@@ -25,6 +26,7 @@ interface Props {
 };
 
 function SettingsDialog(props: Props) {
+	const socket = useContext(SocketCtx);
 	const [config, setConfig] = useRecoilState(configState);
 	const setNotification = useSetRecoilState(notificationState);
 	const [serverUrl, setServerUrl] = useState(config.serverUrl);
@@ -32,6 +34,8 @@ function SettingsDialog(props: Props) {
 	const [reconnectionDelayMax, setReconnectionDelayMax] = useState(config.reconnectionDelayMax.toString());
 	const [pairingTimeout, setPairingTimeout] = useState(config.pairingTimeout.toString());
 	const [autoCopy, setAutoCopy] = useState(config.autoCopy);
+	const [pairedDevices, setPairedDevices] = useRecoilState(pairedDeviceListState);
+	const setOutgoingRequests = useSetRecoilState(outgoingRequestListState);
 
 	const validNumber = (s: string) => {
 		const num = parseInt(s);
@@ -45,23 +49,14 @@ function SettingsDialog(props: Props) {
 		&& validReconnectionDelayMax()
 		&& validPairingTimeout();
 
-	useEffect(() => {
-		// Init device if empty
-		if (!config.localDevice) {
-			const initializeDevice = async () => {
-				const localDevice = await initDevice();
-				setConfig({
-					...config,
-					localDevice
-				});
-			};
-
-			initializeDevice();
-		}
-	}, [config]);
-
 	const regenerateKeyPairs = () => {
 		initDevice().then(device => {
+			if (socket) {
+				socket.emit("delete", { pairedDevices });
+				// Remove all paired devices and outgoing requests
+				setPairedDevices([]);
+				setOutgoingRequests([]);
+			}
 			setConfig({
 				...config,
 				localDevice: {
@@ -205,7 +200,7 @@ function SettingsDialog(props: Props) {
 						<span>{config.localDevice?.deviceId}</span>
 						<IconButton
 							title="Re-generate"
-							color="secondary"
+							color="primary"
 							size="small"
 							onClick={regenerateKeyPairs}
 							sx={{ ml: 1.5 }}

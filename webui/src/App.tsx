@@ -92,7 +92,7 @@ function App() {
     s.on("pair", (e: PairEvent) => {
       // Use updater form because incomingRequests is not a dependency
       setIncomingRequests(prev => {
-        if (prev.findIndex(v => v.deviceId === e.deviceId) !== -1) {
+        if (hasDevice(prev, e)) {
           return prev;
         }
         return [ ...prev, e ];
@@ -100,18 +100,10 @@ function App() {
     });
 
     s.on("unpair", (e: UnpairEvent) => {
-      if (hasDevice(pairedDevices, e)) {
-        setNotification({
-          color: "info",
-          message: `Device ${e.name} unpaired`
-        });
-      }
-      else {
-        setNotification({
-          color: "error",
-          message: `Device ${e.name} rejected pairing`
-        });
-      }
+      setNotification({
+        color: "error",
+        message: `Device ${e.name} unpaired or rejected`
+      });
       setPairedDevices(prev => removeDevice(prev, e));
 			// remove the outgoing event as well (rejection)
 			setOutgoingRequests(prev => removeDevice(prev, e));
