@@ -3,23 +3,33 @@
  * See full notice in README.md in this project
  */
 
-import fs from "fs";
-import { Config } from "./types";
-import { isConfig } from "./types.guard";
+import fs from "node:fs";
+import merge from "lodash/merge";
+import { Config, PartialConfig } from "./types";
+import { isPartialConfig} from "./types.guard";
+
+const defaultConfig: Config = {
+	bufferSize: {
+		share: 10,
+		unpair: 10
+	}
+};
 
 export function readConfig() {
-	const configPath = process.env.CONFIG_PATH || "/data/config.json";
+	const configPath = process.env.CONFIG_PATH || "/app/config.json";
+	let config: PartialConfig;
 
 	try {
-		const rawConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-		if (!isConfig(rawConfig)) {
-			throw new Error("invalid config");
+		config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+		if (!isPartialConfig(config)) {
+			console.error("Invalid config");
+			process.exit(1);
 		}
-		const config = rawConfig as Config;
-		return config;
 	}
 	catch (err) {
-		console.error("Error reading config: ", (err as Error).message);
-		process.exit(1);
+		// No config
+		config = {};
 	}
+
+	return merge(defaultConfig, config);
 };

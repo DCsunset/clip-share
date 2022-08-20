@@ -21,11 +21,13 @@
   "author": "DCsunset",
   "license": "AGPL-3.0",
   "dependencies": {
+    "lodash": "^4.17.21",
     "luxon": "^2.3.0",
     "openpgp": "^5.0.1",
     "socket.io": "^4.4.1"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.184",
     "@types/luxon": "^2.0.9",
     "@types/node": "^17.0.8",
     "ts-auto-guard": "^1.0.0",

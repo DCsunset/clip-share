@@ -10,9 +10,17 @@
  */
 export type Config = {
 	bufferSize: {
+		/// Buffer size for each event
 		[type in EventType]: number
 	}	
 };
+
+/**
+ * Partial server config (for custom config)
+ * 
+ * @see {isPartialConfig} ts-auto-guard:type-guard
+ */
+export type PartialConfig = Partial<Config>;
 
 export type DeviceState = {
 	name: string,
