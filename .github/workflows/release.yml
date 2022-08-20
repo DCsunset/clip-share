@@ -1,0 +1,59 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: Info
+        id: info
+        run: |
+          export _NAME="clip-share-${GITHUB_REF#refs/tags/}"
+          echo "::set-output name=RELEASE_NAME::$_NAME"
+          echo "RELEASE_NAME=$_NAME" >> $GITHUB_ENV
+      - name: Build Web UI
+        run: |
+          cd webui
+          npm ci --no-optional
+          npm run build
+          cd ..
+      - name: Build Server
+        run: |
+          cd server
+          npm ci --no-optional
+          npm run build
+          cd ..
+      - name: Create Archive 
+        run: |
+          cd webui/dist
+          zip -9 -r ../../$RELEASE_NAME-webui.zip .
+          tar -cavf ../../$RELEASE_NAME-webui.tar.zst .
+          cd ../../server/dist
+          zip -9 -r ../../$RELEASE_NAME-server.zip .
+          tar -cavf ../../$RELEASE_NAME-server.tar.zst .
+      - name: Upload to GitHub release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: ./${{ steps.info.outputs.RELEASE_NAME }}*
+          tag: ${{ github.ref }}
+          overwrite: true
+
