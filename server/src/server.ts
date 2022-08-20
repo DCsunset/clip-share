@@ -253,8 +253,8 @@ const httpServer = createServer();
 io.attach(httpServer);
 
 const isProduction = process.env.NODE_ENV === "production";
-const address = isProduction ? "0.0.0.0" : "localhost";
-const port = 3000;
+const address = process.env.ADDR || (isProduction ? "0.0.0.0" : "localhost");
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 httpServer.listen(port, address, 128, () => {
 	console.log(`Listening at ${address}:${port}`);
 });
