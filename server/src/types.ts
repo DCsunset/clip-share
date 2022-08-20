@@ -105,6 +105,16 @@ export interface ShareEvent {
 };
 
 /**
+ * Event to delete current device
+ * 
+ * @see {isDeleteEvent} ts-auto-guard:type-guard
+ */
+export interface DeleteEvent {
+	pairedDevices: Device[]
+};
+
+
+/**
  * Error code
  */
 export enum ErrCode {

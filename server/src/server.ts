@@ -11,9 +11,11 @@ import {
 	PairEvent,
 	ShareEvent,
 	UnpairEvent,
+	DeleteEvent,
 } from "./types";
 import {
 	isAuthRequest,
+	isDeleteEvent,
 	isPairEvent,
 	isShareEvent,
 	isUnpairEvent,
@@ -64,6 +66,7 @@ const io = new Server({
 	// websocket only
 	transports: ["websocket"]
 });
+
 
 io.on("connection", async socket => {
 	try {
@@ -119,7 +122,31 @@ io.on("connection", async socket => {
 				}
 			}
 		}
+		
+		const unpairDevices = (devices: Device[]) => {
+			for (const d of devices) {
+				const event: UnpairEvent = {
+					deviceId,
+					name
+				};
 
+				if (!onlineDevices.has(d.deviceId)) {
+					addToBuffer(d.deviceId, "unpair", event);
+					continue;
+				}
+
+				// Info of the other devices
+				const otherDevice = onlineDevices.get(d.deviceId)!;
+				if (otherDevice.name != d.name) {
+					socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, d));
+					return;
+				}
+
+				// Send sender's info to receiver
+				io.to(otherDevice.socketId).emit("unpair", event);
+			}
+		};
+	
 		// List request (manually refresh)
 		socket.on("list", () => {
 			socket.emit("list", getOnlineDevices());
@@ -161,22 +188,7 @@ io.on("connection", async socket => {
 			}
 
 			const event = data as UnpairEvent;
-			const sentEvent: UnpairEvent = { deviceId, name };
-
-			if (!onlineDevices.has(event.deviceId)) {
-				addToBuffer(event.deviceId, "unpair", sentEvent);
-				return;
-			}
-
-			// Info of the other devices
-			const otherDevice = onlineDevices.get(event.deviceId)!;
-			if (otherDevice.name != event.name) {
-				socket.emit("error", newErrEvent(ErrCode.DeviceNameMismatched, event));
-				return;
-			}
-
-			// Send sender's info to receiver
-			io.to(otherDevice.socketId).emit("unpair", sentEvent);
+			unpairDevices([event]);
 		});
 		
 		// Share data
@@ -200,6 +212,24 @@ io.on("connection", async socket => {
 			const otherDevice = onlineDevices.get(event.deviceId)!;
 			// Send sender's info to receiver
 			io.to(otherDevice.socketId).emit("share", sentEvent);
+		});
+
+		// Delete current deivce
+		socket.on("delete", data => {
+			if (!isDeleteEvent(data)) {
+				socket.emit("error", newErrEvent(ErrCode.InvalidRequest));
+				return;
+			}
+			const event = data as DeleteEvent;
+
+			// delete buffer
+			buffer.delete(deviceId);
+			// unpair devices
+			unpairDevices(event.pairedDevices);
+
+			onlineDevices.delete(deviceId);
+			connectionMap.delete(deviceId);
+			socket.disconnect(true);
 		});
 
 		// Send updated device list to every connected device
