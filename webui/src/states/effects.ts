@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { AtomEffect } from "recoil";
 
 const keyPrefix = "clip-share.";

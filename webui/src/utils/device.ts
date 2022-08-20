@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { Device } from "../types/server";
 
 /// Find a device in list (returns object)

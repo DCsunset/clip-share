@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { Alert, AppBar, IconButton, Snackbar, Toolbar, Tooltip, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useEffect, useState } from "react";

@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { Device, PairEvent } from "../types/server";
 import { atom, selector } from "recoil";
 import { localStorageEffect } from "./effects";

@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import "@mui/material/styles";
 
 declare module '@mui/material/styles' {

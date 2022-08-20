@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import fs from "fs";
 import { Config } from "./types";
 import { isConfig } from "./types.guard";

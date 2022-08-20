@@ -1,4 +1,9 @@
 /**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
+/**
  * Server config
  * 
  * @see {isConfig} ts-auto-guard:type-guard

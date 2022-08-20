@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { useState, useContext } from "react";
 import { useSetRecoilState, useRecoilValue } from "recoil";
 import Icon from '@mdi/react';

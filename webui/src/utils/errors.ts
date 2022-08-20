@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { ErrCode, ErrEvent } from "../types/server";
 
 export function errorToString(err: ErrEvent) {

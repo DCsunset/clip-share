@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2022 DCsunset
+ * See full notice in README.md in this project
+ */
+
 import { atom } from "recoil";
 import { Device } from "../types/server";
 import { generateKeyPairs } from "../utils/crypto";
