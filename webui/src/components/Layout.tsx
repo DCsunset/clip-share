@@ -80,7 +80,7 @@ function Layout(props: Props) {
 						display: "flex",
 						mr: 1.2
 					}}>
-						<img width="32px" src={Logo} />
+						<img width="28px" src={Logo} />
 					</Box>
 					<Typography variant="h5" noWrap>
 						Clip Share
