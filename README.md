@@ -1,5 +1,8 @@
 # clip-share
 
+[![Docker Image Size](https://badgen.net/docker/size/dcsunset/clip-share-server)](https://hub.docker.com/r/dcsunset/clip-share-server)
+[![license](https://badgen.net/github/license/dcsunset/clip-share)](https://github.com/DCsunset/clip-share)
+
 Self-hosted service to share clipboard content with other devices.
 
 ## Screenshots
@@ -10,7 +13,13 @@ Self-hosted service to share clipboard content with other devices.
 
 ### Usage
 
-Build and run the repo from source:
+Run the docker image for server:
+
+```sh
+docker run -it -p 3000:3000 dcsunset/clip-share-server
+```
+
+Or you can build and run the repo from source:
 
 ```sh
 cd server
@@ -22,12 +31,13 @@ The server listens at `http://0.0.0.0:3000` by default in production mode.
 The address and port to bind can be changed using environment variables `ADDR` and `PORT`.
 
 
-
 ## Web UI
 
 ### Usage
 
-Build and run the repo from source:
+Pre-built files can be found in GitHub releases.
+
+Or you can build and run the repo from source:
 
 ```sh
 cd webui
