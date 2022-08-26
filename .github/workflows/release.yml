@@ -32,13 +32,7 @@ jobs:
       - name: Build Web UI
         run: |
           cd webui
-          npm ci --no-optional
-          npm run build
-          cd ..
-      - name: Build Server
-        run: |
-          cd server
-          npm ci --no-optional
+          npm ci
           npm run build
           cd ..
       - name: Create Archive 
@@ -46,9 +40,6 @@ jobs:
           cd webui/dist
           zip -9 -r ../../$RELEASE_NAME-webui.zip .
           tar -cavf ../../$RELEASE_NAME-webui.tar.zst .
-          cd ../../server/dist
-          zip -9 -r ../../$RELEASE_NAME-server.zip .
-          tar -cavf ../../$RELEASE_NAME-server.tar.zst .
       - name: Upload to GitHub release
         uses: svenstaro/upload-release-action@v2
         with:
