@@ -22,7 +22,7 @@ import {
 	mdiMinus,
 	mdiSend
 } from "@mdi/js";
-import Icon from '@mdi/react';
+import { Icon } from '@mdi/react';
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
 	pairedDeviceListState,

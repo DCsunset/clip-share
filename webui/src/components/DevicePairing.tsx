@@ -12,7 +12,7 @@ import { configState } from "../states/config.js";
 import { PairEvent, UnpairEvent } from "../types/server";
 import { addDevice, findDevice, removeDevice } from "../utils/device";
 import { DateTime } from "luxon";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import { mdiSwapHorizontal } from "@mdi/js";
 
 function DevicePairing() {

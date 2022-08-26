@@ -8,7 +8,7 @@ import { Box } from "@mui/system";
 import { useEffect, useState } from "react";
 import Logo from "../logo.svg";
 import { mdiCog } from "@mdi/js";
-import Icon from "@mdi/react";
+import { Icon } from "@mdi/react";
 import ConfigDialog from "./ConfigDialog";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
