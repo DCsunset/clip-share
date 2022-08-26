@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/DCsunset/clip-share/compare/v1.0.2...v1.0.3) (2022-08-26)
+
+
+### Bug Fixes
+
+* **webui:** fix Icon import to fix rollup build ([5050b15](https://github.com/DCsunset/clip-share/commit/5050b1544c77e4463861f9f4bead2784e1549fee))
+
 ### [1.0.2](https://github.com/DCsunset/clip-share/compare/v1.0.1...v1.0.2) (2022-08-26)
 
 
