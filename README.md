@@ -1,6 +1,6 @@
 # clip-share
 
-[![Docker Image Size](https://badgen.net/docker/size/dcsunset/clip-share-server)](https://hub.docker.com/r/dcsunset/clip-share-server)
+[![Docker Image Size](https://badgen.net/docker/size/dcsunset/clip-share)](https://hub.docker.com/r/dcsunset/clip-share)
 [![license](https://badgen.net/github/license/dcsunset/clip-share)](https://github.com/DCsunset/clip-share)
 
 Self-hosted service to share clipboard content with other devices.
@@ -9,17 +9,20 @@ Self-hosted service to share clipboard content with other devices.
 
 ![Screenshot](pictures/screenshot.png)
 
-## Server
 
-### Usage
+## Usage
 
-Run the docker image for server:
+Run the container image:
 
 ```sh
-docker run -it -p 3000:3000 dcsunset/clip-share-server
+docker run -it -p 8080:80 dcsunset/clip-share
 ```
 
-Or you can build and run the repo from source:
+Then visit <http://localhost:8080>.
+
+## Server
+
+You can build and run the server from source:
 
 ```sh
 cd server
