@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Build and Publish Container Image
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_publish:
-    name: Build and Publish Docker Image for Server
+    name: Build and Publish Container Image
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -31,7 +31,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: dcsunset/clip-share-server
+          images: dcsunset/clip-share
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
@@ -43,5 +43,5 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }},dcsunset/clip-share-server:latest
+          tags: ${{ steps.meta.outputs.tags }},dcsunset/clip-share:latest
           labels: ${{ steps.meta.outputs.labels }}
