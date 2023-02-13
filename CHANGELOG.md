@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## [1.1.0](https://github.com/DCsunset/clip-share/compare/v1.0.3...v1.1.0) (2023-02-13)
+
+
+### Features
+
+* integrate both webui and server into container ([2dd132a](https://github.com/DCsunset/clip-share/commit/2dd132abdd1a25ac4059c3cc0eedad4489b1e6e3))
 
 ### [1.0.3](https://github.com/DCsunset/clip-share/compare/v1.0.2...v1.0.3) (2022-08-26)
 
