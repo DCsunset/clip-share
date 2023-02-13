@@ -1,0 +1,18 @@
+{
+	auto_https off
+}
+
+http://:80 {
+	@api {
+		path_regexp /socket.io(/*)?
+	}
+	route @api {
+		reverse_proxy localhost:3000
+	}
+	
+	route {
+		root * /app/webui
+		try_files {path} /index.html
+		file_server
+	}
+}

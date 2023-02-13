@@ -1,13 +1,29 @@
-FROM node:18 AS build-env
-COPY server /app
-WORKDIR /app
-RUN npm ci
-RUN npm run build
-RUN npm prune --omit=dev
-
-FROM gcr.io/distroless/nodejs:18
-ENV NODE_ENV=production
+FROM docker.io/library/alpine:3.17
 LABEL MAINTAINER="DCsunset"
-COPY --from=build-env /app /app
+
+COPY server /app/server
+COPY webui /app/webui-src
+COPY container /app/container
+
+# install deps
+RUN apk --no-cache add \
+	nodejs npm caddy
+
+# build webui
+RUN cd /app/webui-src && \
+	npm ci && \
+	npm run build && \
+	cp -r dist /app/webui && \
+	rm -rf /app/webui-src
+	
+# build server
+RUN cd /app/server && \
+	npm ci && \
+	npm run build && \
+	npm prune --omit=dev
+
+ENV NODE_ENV=production
 WORKDIR /app
-CMD ["dist/server.js"]
+EXPOSE 80 3000
+
+CMD ["./container/start.sh"]
